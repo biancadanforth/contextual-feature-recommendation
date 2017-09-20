@@ -23,12 +23,8 @@ body {
 }
 
 a {
-  color: var(--primary-text-color);
-  text-decoration: none;
-}
-
-#link {
   color: var(--link-text-color);
+  text-decoration: none;
 }
 
 .doorhanger {
@@ -45,7 +41,7 @@ a {
   display: none;
 }
 
-.content-wrapper {
+.content-left-wrapper, .content-right-wrapper {
   display: flex;
   align-items: center;
 }
@@ -55,7 +51,7 @@ a {
   margin-left: 5px;
 }
 
-#link {
+.link {
   margin-left: 5px;
 }
 
@@ -66,43 +62,60 @@ a {
   color: var(--primary-text-color);
 }
 
-#button-accept {
+#primary-button {
   color: white;
   background-color: var(--accept-button-background-color);
   border-color: #3085d2;
 }
 
-#button-accept:hover {
+#primary-button:hover {
   background-color: var(--accept-button-hover-background-color);
 }
 
-.button-reject-wrapper {
+#primary-button.show-icon::before {
+  content: "";
+  display: inline-block;
+  background-repeat: no-repeat;
+  background-position: center;
+  width: 8px;
+  height: 8px;
+  background-size: contain;
+  margin-right: 5px;
+  background-image: url(plus-sign.svg);
+}
+
+#primary-button::before.hidden {
+  display: none;
+}
+
+.secondary-button-wrapper {
   display: flex;
 }
 
-#button-reject {
+#secondary-button {
   background-color: var(--reject-button-background-color);
   border-right-color: rgba(0, 0, 0, .2);
 }
 
-#button-reject:hover, #button-show-dropdown-menu:hover {
+#secondary-button:hover, #secondary-button-show-dropdown:hover {
   background-color: var(--reject-button-hover-background-color);
 }
 
-#button-show-dropdown-menu {
+#secondary-button-show-dropdown {
   position: relative;
   margin: 0;
+  /* From: resource://gre-resources/forms.css in Firefox URL bar*/
   border: 2px outset ThreeDLightShadow;
   border-left-width: 0;
   align-self: stretch;
   background-color: var(--reject-button-background-color);
 }
 
-#button-show-dropdown-menu:active {
+#secondary-button-show-dropdown:active {
   border-style: inset;
 }
 
-#button-show-dropdown-menu::after {
+#secondary-button-show-dropdown::after {
   content: "";
   display: inline-block;
   background-repeat: no-repeat;
@@ -167,6 +180,14 @@ a {
 
 #icon {
   width: 25px;
+}
+
+label, .link {
+  font-size: .75em;
+}
+
+.star-rating, #additional-info, #close-icon {
+  margin-left: 10px;
 }
 
 #close-icon {
