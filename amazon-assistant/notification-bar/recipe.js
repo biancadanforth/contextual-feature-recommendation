@@ -1,12 +1,12 @@
 /*
-* Shield study recipe based on doorhanger UI treatments for
+* Shield study recipe based on notificationBar UI treatments for
 * Contextual Feature Recommendation - Amazon Assistant
 *
 * Ultimately: Accept HTML as values and sanitize.
 */
 const recipe = {
   
-  doorhanger: {
+  notificationBar: {
     // DEFAULT ELEMENTS:
     // to remove from UI, replace string value with ''.
     icon: {
@@ -46,7 +46,7 @@ const recipe = {
     // OPTIONAL ELEMENTS
     starRating: {
       url: '', // e.g. 'fourStars.png'
-      // specify where in doorhanger this element should be included
+      // specify where in notificationBar this element should be included
       location: '' // acceptable values: 'left', 'middle', 'right'
     },
     link: {

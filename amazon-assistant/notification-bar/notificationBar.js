@@ -1,4 +1,4 @@
-const doorhanger = {
+const notificationBar = {
 
   init() {
     this.addListeners();
@@ -6,9 +6,9 @@ const doorhanger = {
 
   addListeners() {
     window.addEventListener('load', () => {
-      this.createDoorhanger();
+      this.createNotificationBar();
       this.closeIconEle.addEventListener('click', () => {
-        this.closeDoorhanger();
+        this.closeNotificationBar();
       });
       this.secondaryButtonShowDropdownEle.addEventListener('click', () => {
         this.toggleDropdownMenu();
@@ -16,14 +16,14 @@ const doorhanger = {
     });
   },
 
-  createDoorhanger() {
+  createNotificationBar() {
     this.getElements();
     this.addDropdownMenuElements();
     this.addContent();
   },
 
-  closeDoorhanger() {
-    this.doorhangerEle.classList.add('hidden');
+  closeNotificationBar() {
+    this.notificationBarEle.classList.add('hidden');
   },
 
   toggleDropdownMenu() {
@@ -31,7 +31,7 @@ const doorhanger = {
   },
 
   getElements() {
-    this.doorhangerEle = document.getElementById('doorhanger');
+    this.notificationBarEle = document.getElementById('notification-bar');
     this.iconEle = document.getElementById('icon');
     this.ratingLeftEle = document.getElementById('rating-left');
     this.messageEle = document.getElementById('message');
@@ -50,7 +50,7 @@ const doorhanger = {
   },
 
   addDropdownMenuElements() {
-    recipe.doorhanger.secondaryButton.dropdownOptions.forEach((item) => {
+    recipe.notificationBar.secondaryButton.dropdownOptions.forEach((item) => {
       const menuItem = document.createElement('li');
       menuItem.setAttribute('id', item.id);
       menuItem.classList.add('dropdown-item');
@@ -59,14 +59,14 @@ const doorhanger = {
   },
 
   addContent() {
-    if (recipe.doorhanger.icon.url) {
+    if (recipe.notificationBar.icon.url) {
       this.addImageContent();
     } else {
       this.iconEle.style.display = 'none';
     }
 
-    if (recipe.doorhanger.starRating.url) {
-      switch (recipe.doorhanger.starRating.location) {
+    if (recipe.notificationBar.starRating.url) {
+      switch (recipe.notificationBar.starRating.location) {
         case 'left':
           this.addRatingLeftContent();
           break;
@@ -85,33 +85,33 @@ const doorhanger = {
       this.ratingMiddleEle.style.display = 'none';
       this.ratingRightEle.style.display = 'none';
     }
-    if (recipe.doorhanger.primaryButton.color) {
-      this.primaryButtonEle.style.backgroundColor = recipe.doorhanger.primaryButton.color;
+    if (recipe.notificationBar.primaryButton.color) {
+      this.primaryButtonEle.style.backgroundColor = recipe.notificationBar.primaryButton.color;
     }
     // TODO: pass icon url from recipe to CSS
-    if (recipe.doorhanger.primaryButton.icon.url) {
+    if (recipe.notificationBar.primaryButton.icon.url) {
       this.primaryButtonEle.classList.add("show-icon");
     } else {
       this.primaryButtonEle.classList.remove("show-icon");
     }
-    if (recipe.doorhanger.primaryButton.label) {
+    if (recipe.notificationBar.primaryButton.label) {
       this.addPrimaryButtonContent();
     } else {
       this.primaryButtonEle.style.display = 'none';
     }
-    if (recipe.doorhanger.secondaryButton.label) {
+    if (recipe.notificationBar.secondaryButton.label) {
       this.addSecondaryButtonContent();
     } else {
       this.secondaryButtonEle.style.display = 'none';
       this.secondaryButtonShowDropdownEle.style.display = 'none';
     }
-    if (recipe.doorhanger.message.text) {
+    if (recipe.notificationBar.message.text) {
       this.addMessageContent();
     } else {
       this.messageEle.style.display ='none';
     }
-    if (recipe.doorhanger.link.text) {
-      switch (recipe.doorhanger.link.location) {
+    if (recipe.notificationBar.link.text) {
+      switch (recipe.notificationBar.link.location) {
         case 'middle':
           this.addLinkMiddleContent();
           break;
@@ -127,12 +127,12 @@ const doorhanger = {
       this.linkMiddleEle.style.display = 'none';
       this.linkRightEle.style.display = 'none';
     }
-    if (recipe.doorhanger.secondaryButton.dropdownOptions) {
+    if (recipe.notificationBar.secondaryButton.dropdownOptions) {
       this.addDropdownMenuContent();
     } else {
       this.dropdownMenuEle.style.display = 'none';
     }
-    if (recipe.doorhanger.checkbox.label) {
+    if (recipe.notificationBar.checkbox.label) {
       this.addCheckboxContent();
     } else {
       this.checkboxEle.style.display = 'none';
@@ -141,60 +141,60 @@ const doorhanger = {
   },
 
   addImageContent() {
-    this.iconEle.src = recipe.doorhanger.icon.url;
-    this.iconEle.alt = recipe.doorhanger.icon.alt;
+    this.iconEle.src = recipe.notificationBar.icon.url;
+    this.iconEle.alt = recipe.notificationBar.icon.alt;
   },
 
   addRatingLeftContent() {
-    this.ratingLeftEle.src = recipe.doorhanger.starRating.url;
+    this.ratingLeftEle.src = recipe.notificationBar.starRating.url;
   },
 
   addPrimaryButtonContent() {
-    this.primaryButtonEle.textContent = recipe.doorhanger.primaryButton.label;
+    this.primaryButtonEle.textContent = recipe.notificationBar.primaryButton.label;
   },
 
   addSecondaryButtonContent() {
-    this.secondaryButtonEle.textContent = recipe.doorhanger.secondaryButton.label;
+    this.secondaryButtonEle.textContent = recipe.notificationBar.secondaryButton.label;
   },
 
   addMessageContent() {
-    if (recipe.doorhanger.message.link.text) {
-      const messageParts = recipe.doorhanger.message.text.split(recipe.doorhanger.message.link.text);
-      this.messageEle.innerHTML = `${messageParts[0]} <a href="${recipe.doorhanger.message.link.url}">${recipe.doorhanger.message.link.text}</a> ${messageParts[1]}`;
+    if (recipe.notificationBar.message.link.text) {
+      const messageParts = recipe.notificationBar.message.text.split(recipe.notificationBar.message.link.text);
+      this.messageEle.innerHTML = `${messageParts[0]} <a href="${recipe.notificationBar.message.link.url}">${recipe.notificationBar.message.link.text}</a> ${messageParts[1]}`;
     } else {
-      this.messageEle.textContent = recipe.doorhanger.message.text;
+      this.messageEle.textContent = recipe.notificationBar.message.text;
     }
   },
 
   addRatingMiddleContent() {
-    this.ratingMiddleEle.src = recipe.doorhanger.starRating.url;
+    this.ratingMiddleEle.src = recipe.notificationBar.starRating.url;
   },
 
   addLinkMiddleContent() {
-    this.linkMiddleEle.textContent = recipe.doorhanger.link.text;
-    this.linkMiddleEle.href = recipe.doorhanger.link.url;
+    this.linkMiddleEle.textContent = recipe.notificationBar.link.text;
+    this.linkMiddleEle.href = recipe.notificationBar.link.url;
   },
 
   addDropdownMenuContent() {
-    const numDropdownMenuItems = recipe.doorhanger.secondaryButton.dropdownOptions.length;
+    const numDropdownMenuItems = recipe.notificationBar.secondaryButton.dropdownOptions.length;
     const dropdownMenuItemEles = this.dropdownMenuEle.children;
     for (let i = 0; i < numDropdownMenuItems; i++) {
-      dropdownMenuItemEles[i].textContent = recipe.doorhanger.secondaryButton.dropdownOptions[i].label;
+      dropdownMenuItemEles[i].textContent = recipe.notificationBar.secondaryButton.dropdownOptions[i].label;
     }
   },
 
   addRatingRightContent() {
-    this.ratingRightEle.src = recipe.doorhanger.starRating.url;
+    this.ratingRightEle.src = recipe.notificationBar.starRating.url;
   },
 
   addCheckboxContent() {
-    this.checkboxLabelEle.textContent = recipe.doorhanger.checkbox.label;
+    this.checkboxLabelEle.textContent = recipe.notificationBar.checkbox.label;
   },
 
   addLinkRightContent() {
-    this.linkRightEle.textContent = recipe.doorhanger.link.text;
-    this.linkRightEle.href = recipe.doorhanger.link.url;
+    this.linkRightEle.textContent = recipe.notificationBar.link.text;
+    this.linkRightEle.href = recipe.notificationBar.link.url;
   }
 };
 
-doorhanger.init();
+notificationBar.init();

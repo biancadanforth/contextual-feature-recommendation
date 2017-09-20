@@ -27,7 +27,7 @@ a {
   text-decoration: none;
 }
 
-.doorhanger {
+.notification-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -37,7 +37,7 @@ a {
   box-shadow: var(--standard-box-shadow);
 }
 
-.doorhanger.hidden {
+.notification-bar.hidden {
   display: none;
 }
 
