@@ -2,19 +2,32 @@
   box-sizing: border-box;
 }
 
+body {
+  font-size: .85em;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: #5fbdf8;
+}
+
 .Panel {
   max-width:400px;
   padding: 20px;
   background-color: #fdfdfd;
+  border: 1px solid #c3c3c3;
+}
+
+.section-grid-wrapper {
+  display: grid;
+  grid-template-rows: repeat(2, auto);
+  align-items: center;
 }
 
 /* ----- Top section  ----- */
-
-section:first-child {
-  display: flex;
-  align-items: center;
-  position: relative;
-}
 
 .icon {
   width: 30px;
@@ -27,8 +40,27 @@ section:first-child {
 }
 
 .rationale {
+  grid-column-start: 3;
   align-self: flex-start;
-  width: 20px;
+  width: 15px;
 }
 
 /* ----- Middle section  ----- */
+
+.section-middle {
+  grid-column-start: 2;
+  grid-row-start: 2;
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.section-middle div {
+  margin-left: 15px;
+}
+
+.users {
+  display: inline-block;
+  margin-left: 5px;
+  color: #a3a3a3;
+}
