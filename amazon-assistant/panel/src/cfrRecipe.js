@@ -8,7 +8,7 @@ export const cfrRecipe = {
       iconUrl: './extensions-16.svg',
       iconAltText: 'Addons logo',
       header: 'You might like the Amazon Assistant extension since you visit this site frequently.',
-      summary: 'Instant product matches while you shop across the web.',
+      summary: 'Instant product matches while you shop across the web. ',
       action: 'Add to Firefox', // affirmative, primary action
       actionUrl: '',                
       learnMore: 'Learn more', // intermediate action, not completely affirmative
@@ -21,6 +21,17 @@ export const cfrRecipe = {
   },
     panelComponent: {
       declineAction: 'Not Now',
+      // Add as many or as few options as needed
+      dropdownOptions: [
+        {
+          id: 'dont-show',
+          label: "Don't show me this again" 
+        },
+        {
+          id: 'harry-potter',
+          label: 'Harry Potter is a wizard.'
+        }
+      ],
       userCount: '398,277 users',
       heroUrl: 'https://addons.cdn.mozilla.net/user-media/addon_icons/337/337359-64.png?modified=1507252821',
       heroAltText: 'Amazon Assistant',
