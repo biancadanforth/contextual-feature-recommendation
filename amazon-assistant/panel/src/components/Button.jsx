@@ -1,5 +1,5 @@
 import React from 'react';
-import './css/Button.css';
+import '../css/Button.css';
 
 class Button extends React.Component {
   constructor(props) {
@@ -11,7 +11,12 @@ class Button extends React.Component {
   render() {
     /* TODO bdanforth: pass click event back up for telemetry */
     return (
-      <button className="button primary-button">{ this.props.label }</button>
+      <button
+        className="button primary-button"
+        onClick={ () => this.props.buttonClicked() }
+      >
+        { this.props.label }
+      </button>
     );
   }
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import './css/ButtonWithDropdown.css';
+import '../css/ButtonWithDropdown.css';
 import DropdownMenu from './DropdownMenu.jsx';
 
 class ButtonWithDropdown extends React.Component {
@@ -13,10 +13,14 @@ class ButtonWithDropdown extends React.Component {
   addDropdownItems() {
     const listItems = [];
     for (let i = 0; i < this.props.dropdownOptions.length; i++) {
+      let key = this.props.dropdownOptions[i].id;
       listItems.push(
         <li
-          key={ this.props.dropdownOptions[i].id }
-          className="dropdown-item">{ this.props.dropdownOptions[i].label }
+          key={ key }
+          className="dropdown-item"
+          onClick= { () => this.props.dropdownItemClicked(key) }
+        >
+          { this.props.dropdownOptions[i].label }
         </li>
       );
     }
@@ -28,7 +32,13 @@ class ButtonWithDropdown extends React.Component {
 
     return (
       <div className="secondary-button-wrapper">
-        <button id="secondary-button" className="button secondary-button">{ this.props.label }</button>
+        <button
+          id="secondary-button"
+          className="button secondary-button"
+          onClick={ () => this.props.buttonClicked() }
+        >
+          { this.props.label }
+        </button>
         {/* Note: You cannot have a <ul> element (i.e. block element) nested inside a <button> (i.e. inline element)*/}
         <div
           id="secondary-button-show-dropdown"
@@ -38,7 +48,10 @@ class ButtonWithDropdown extends React.Component {
             // TODO bdanforth: pass click event back up for telemetry
           }}
         >
-          <DropdownMenu dropdownOpen={ this.state.dropdownOpen } dropdownItems={ dropdownItems } />
+          <DropdownMenu
+            dropdownOpen={ this.state.dropdownOpen }>
+            { dropdownItems }
+          </DropdownMenu>
         </div>
       </div>
     );

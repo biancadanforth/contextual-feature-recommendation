@@ -1,4 +1,4 @@
-export const cfrRecipe = {
+const cfrRecipe = {
   triggers:  {
     // what user behaviors trigger the UI presentation
   },
@@ -12,7 +12,7 @@ export const cfrRecipe = {
       action: 'Add to Firefox', // affirmative, primary action
       actionUrl: '',                
       learnMore: 'Learn more', // intermediate action, not completely affirmative
-      learnMoreUrl: '',
+      learnMoreUrl: '#',
       rationaleIconUrl: './question-mark.svg',
       rationale: 'This is a sponsored suggestion. You are seeing this because you visit Amazon.com frequently.', // why am I seeing this? ??
       rating: '4', // # of stars, how do we include this widget ultimately?
@@ -38,3 +38,5 @@ export const cfrRecipe = {
     },
   },
 };
+
+export default cfrRecipe;
