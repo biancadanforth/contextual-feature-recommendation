@@ -30,18 +30,9 @@ const recipe = {
       }
     },
     secondaryButton: {
-      label: 'Not Now',
+      label: '',
       // Add as many or as few options as needed
-      dropdownOptions: [
-        {
-          id: 'dont-show',
-          label: "Don't show me this again" 
-        },
-        {
-          id: 'harry-potter',
-          label: 'Harry Potter is a wizard.'
-        }
-      ]
+      dropdownOptions: []
     },    
     // OPTIONAL ELEMENTS
     starRating: {
@@ -55,7 +46,7 @@ const recipe = {
       location: '' // acceptable values: 'middle', 'right'
     },
     checkbox: {
-      label: '' // e.g. "Don't ask me again"
+      label: "Don't show me this again" // e.g. "Don't ask me again"
     },
     additionalInfo: {
       text: '' // e.g. '408,835 users' or '361 reviews'
