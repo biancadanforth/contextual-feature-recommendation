@@ -1,7 +1,7 @@
 "use strict";
 
 /* global  __SCRIPT_URI_SPEC__  */
-/* global Feature, Services */ // from imports
+/* global Feature, Services PopupNotificationsModified */ // from imports
 /* eslint no-unused-vars: ["error", { "varsIgnorePattern": "(startup|shutdown|install|uninstall)" }]*/
 
 const { utils: Cu } = Components;
@@ -21,6 +21,16 @@ const REASONS = studyUtils.REASONS;
 const BASE = `template-shield-study-button-study`;
 XPCOMUtils.defineLazyModuleGetter(this, "Feature", `resource://${BASE}/lib/Feature.jsm`);
 
+XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow",
+  "resource:///modules/RecentWindow.jsm");
+
+// window utilities
+function getMostRecentBrowserWindow() {
+  return RecentWindow.getMostRecentBrowserWindow({
+    private: false,
+    allowPopups: false,
+  });
+}
 
 // var log = createLog(studyConfig.study.studyName, config.log.bootstrap.level);  // defined below.
 // log("LOG started!");
@@ -40,7 +50,51 @@ XPCOMUtils.defineLazyModuleGetter(this, "Feature", `resource://${BASE}/lib/Featu
 async function startup(addonData, reason) {
   // `addonData`: Array [ "id", "version", "installPath", "resourceURI", "instanceID", "webExtension" ]  bootstrap.js:48
   console.log("startup", REASONS[reason] || reason);
-
+  const win = getMostRecentBrowserWindow();
+  win.PopupNotifications.show(
+    win.gBrowser.selectedBrowser,
+    "sample-popup",
+    "",
+    null, /* anchor ID */
+    {
+      label: "Add to Firefox",
+      accessKey: "A",
+      callback: function() {
+        alert("You clicked 'Add to Firefox'.");
+      },
+    },
+    [
+      {
+        label: "Not Now",
+        accessKey: "N",
+        callback: function() {
+          alert("You clicked 'Not Now'.");
+        },
+      },
+      {
+        label: "Don't show sponsored suggestions again",
+        accessKey: "D",
+        callback: function() {
+          alert("You clicked 'Don't show sponsored suggestions again'.");
+        },
+      },
+    ],
+    {
+      timeout: Date.now() + 3000,
+      persistWhileVisible: true,
+      persistent: true,
+      eventCallback: (state) => {
+        console.log(state);
+      },
+      hideClose: true,
+    }
+  );
+  // console.log("HI THERE", PopupNotificationsModified(
+  //   win.gBrowser,
+  //   win.document.getElementById("notification-popup"),
+  //   win.document.getElementById("notification-popup-box")
+  //   )
+  // );
   /* Configuration of Study Utils*/
   studyUtils.setup({
     ...config,

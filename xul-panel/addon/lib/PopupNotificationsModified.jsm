@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-this.EXPORTED_SYMBOLS = ["PopupNotificationsModified"];
+this.EXPORTED_SYMBOLS = ["PopupNotifications"];
 
 var Cc = Components.classes, Ci = Components.interfaces, Cu = Components.utils;
 
@@ -211,7 +211,7 @@ Notification.prototype = {
  *            and when the "anchorVisibilityChange" method is called.
  *        }
  */
-this.PopupNotificationsModified = function PopupNotifications(tabbrowser, panel,
+this.PopupNotifications = function PopupNotifications(tabbrowser, panel,
                                                       iconBox, options = {}) {
   if (!(tabbrowser instanceof Ci.nsIDOMXULElement))
     throw "Invalid tabbrowser";
