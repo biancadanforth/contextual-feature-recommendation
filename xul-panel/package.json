@@ -1,24 +1,24 @@
 {
-  "name": "template-shield-study",
-  "description": "Template Shield Study",
-  "version": "1.2.0",
-  "author": "Mozilla Gregg Lind <glind@mozilla.com>",
+  "name": "custom-popup-example-addon",
+  "description": "Custom popup example addon",
+  "version": "0.1.0",
+  "author": "Mozilla Bianca Danforth <bdanforth@mozilla.com>",
   "addon": {
     "ABOUT": "use these variables fill the moustache templates",
-    "id": "@template-button-study.shield.mozilla.com",
-    "name": "Shield Bootstrap Example - Button Study",
-    "minVersion": "57.0",
+    "id": "custom-popup-example-addon@mozilla.org",
+    "name": "Custom Panel Example - Bootstrapped Addon",
+    "minVersion": "52.0",
     "maxVersion": "*",
     "multiprocessCompatible": true,
-    "hasEmbeddedWebExtension": true,
-    "chromeResource": "template-shield-study-button-study",
-    "creator": "Gregg Lind <glind@mozilla.com>",
-    "description": "template shield study to serve a as base.  This one is about Toolbar Buttons",
+    "hasEmbeddedWebExtension": false,
+    "chromeResource": "custom-popup-example-addon",
+    "creator": "Bianca Danforth <bdanforth@mozilla.com>",
+    "description": "Example of how to show a popup with custom content.",
     "bugzilla": "<tbd: bug to attach for signing>",
     "iconPath": "icon.png"
   },
   "bugs": {
-    "url": "https://github.com/gregglind/template-shield-study/issues"
+    "url": "https://github.com/biancadanforth/contextual-feature-recommendation/issues"
   },
   "devDependencies": {
     "ajv": "^5.1.1",
@@ -49,7 +49,7 @@
   ],
   "license": "MPL-2.0",
   "main": "index.js",
-  "repository": "https://github.com/mozilla/template-shield-study.git",
+  "repository": "https://github.com/biancadanforth/contextual-feature-recommendation.git",
   "scripts": {
     "build": "bash ./bin/xpi.sh",
     "eslint": "eslint addon --ext jsm --ext js --ext json",

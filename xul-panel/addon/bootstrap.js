@@ -1,217 +1,140 @@
 "use strict";
 
-/* global  __SCRIPT_URI_SPEC__  */
-/* global Feature, Services PopupNotificationsModified */ // from imports
-/* eslint no-unused-vars: ["error", { "varsIgnorePattern": "(startup|shutdown|install|uninstall)" }]*/
-
-const { utils: Cu } = Components;
-Cu.import("resource://gre/modules/Console.jsm");
+const { utils: Cu, interfaces: Ci } = Components;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow", "resource:///modules/RecentWindow.jsm");
 
-const CONFIGPATH = `${__SCRIPT_URI_SPEC__}/../Config.jsm`;
-const { config } = Cu.import(CONFIGPATH, {});
+const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
-const STUDYUTILSPATH = `${__SCRIPT_URI_SPEC__}/../${config.studyUtilsPath}`;
-const { studyUtils } = Cu.import(STUDYUTILSPATH, {});
-
-const REASONS = studyUtils.REASONS;
-
-// QA NOTE: Study Specific Modules - package.json:addon.chromeResouce
-const BASE = `template-shield-study-button-study`;
-XPCOMUtils.defineLazyModuleGetter(this, "Feature", `resource://${BASE}/lib/Feature.jsm`);
-
-XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow",
-  "resource:///modules/RecentWindow.jsm");
-
-// window utilities
-function getMostRecentBrowserWindow() {
-  return RecentWindow.getMostRecentBrowserWindow({
-    private: false,
-    allowPopups: false,
-  });
+/**
+ * Converts an nsISupports object (returned by window observers) that
+ * implements a XUL Window into a ChromeWindow object.
+ */
+function getDOMWindow(subject) {
+  return (
+    subject
+      .QueryInterface(Ci.nsIXULWindow)
+      .docShell
+      .QueryInterface(Ci.nsIInterfaceRequestor)
+      .getInterface(Ci.nsIDOMWindow)
+  );
 }
 
-// var log = createLog(studyConfig.study.studyName, config.log.bootstrap.level);  // defined below.
-// log("LOG started!");
+const WindowWatcher = {
+  async startup() {
+    this.popupID = "custom-popup-example";
+    // Watch for newly-created windows
+    Services.obs.addObserver(this, "xul-window-registered");
 
-/* Example addon-specific module imports.  Remember to Unload.
-   Ideally, put ALL your feature code in a Feature.jsm file,
-   NOT in this bootstrap.js.
+    // Inject into existing windows
+    this.windowList = Services.wm.getEnumerator(null);
+    while (this.windowList.hasMoreElements()) {
+      await this.inject(this.windowList.getNext());
+    }
+  },
 
-  const BASE=`template-shield-study`;
-  XPCOMUtils.defineLazyModuleGetter(this, "SomeExportedSymbol",
-    `resource://${BASE}/SomeModule.jsm");
+  async observe(subject, topic, data) {
+    switch (topic) {
+      case "xul-window-registered":
+        await this.inject(getDOMWindow(subject));
+        break;
+    }
+  },
 
-  XPCOMUtils.defineLazyModuleGetter(this, "Preferences",
-    "resource://gre/modules/Preferences.jsm");
-*/
+  shutdown() {
+    Services.obs.removeObserver(this, "xul-window-registered");
 
-async function startup(addonData, reason) {
-  // `addonData`: Array [ "id", "version", "installPath", "resourceURI", "instanceID", "webExtension" ]  bootstrap.js:48
-  console.log("startup", REASONS[reason] || reason);
-  const win = getMostRecentBrowserWindow();
-  win.PopupNotifications.show(
-    win.gBrowser.selectedBrowser,
-    "sample-popup",
+    // Clean up injected content
+    while (this.windowList.hasMoreElements()) {
+      this.uninject(this.windowList.getNext());
+    }
+  },
+
+  async addPopupContent(domWindow) {
+    const popupSet = await this.getPopupSet(domWindow);
+    const popupContent = domWindow.document.createElementNS(XUL_NS, "popupnotification");
+    popupContent.hidden = true;
+    popupContent.id = `${this.popupID}-notification`;
+    popupContent.innerHTML = `
+      <popupnotificationcontent class="custom-popup-example-content" orient="vertical">
+        <description id="custom-popup-example-header">Foo bar</description>
+        <description id="custom-popup-example-message">Bazz biff</description>
+      </popupnotificationcontent>
+    `;
+    popupSet.appendChild(popupContent);
+  },
+
+  async getPopupSet(domWindow) {
+    const doc = domWindow.document;
+    const popupSet = doc.getElementById("mainPopupSet");
+    if (!popupSet) {
+      return new Promise(resolve => {
+        doc.addEventListener("load", () => {
+          resolve(doc.getElementById("mainPopupSet"));
+        });
+      });
+    }
+
+    return popupSet;
+  },
+
+  async inject(domWindow) {
+    if (domWindow.document.getElementById(this.popupID)) {
+      throw new Error(`No such element by ID ${this.popupID} exists.`);
+    }
+
+    await this.addPopupContent(domWindow);
+  },
+
+  uninject(domWindow) {
+    const popupContent = domWindow.document.querySelector("#mainPopupSet #custom-popup-example-notification");
+    if (popupContent) {
+      popupContent.remove();
+    }
+    // TODO bdanforth: Check if I need to remove the domWindow "load" listener from getPopupSet method
+  },
+};
+
+function install() {}
+
+async function startup() {
+  await WindowWatcher.startup();
+
+  const browserWindow = RecentWindow.getMostRecentBrowserWindow();
+
+  showPopup(browserWindow);
+
+  // browserWindow.setTimeout(() => showPopup(browserWindow), 500);
+}
+
+function showPopup(browserWindow) {
+  browserWindow.PopupNotifications.show(
+    browserWindow.gBrowser.selectedBrowser,
+    "custom-popup-example",
     "",
-    null, /* anchor ID */
+    null,
     {
-      label: "Add to Firefox",
-      accessKey: "A",
+      label: "Do Something",
+      accessKey: "D",
       callback: function() {
-        alert("You clicked 'Add to Firefox'.");
+        alert("Doing something awesome!");
       },
     },
-    [
-      {
-        label: "Not Now",
-        accessKey: "N",
-        callback: function() {
-          alert("You clicked 'Not Now'.");
-        },
-      },
-      {
-        label: "Don't show sponsored suggestions again",
-        accessKey: "D",
-        callback: function() {
-          alert("You clicked 'Don't show sponsored suggestions again'.");
-        },
-      },
-    ],
+    null,
     {
-      timeout: Date.now() + 3000,
-      persistWhileVisible: true,
+      persistentWhileVisible: true,
       persistent: true,
       eventCallback: (state) => {
+        console.log(browserWindow.document);
         console.log(state);
       },
-      hideClose: true,
     }
   );
-  // console.log("HI THERE", PopupNotificationsModified(
-  //   win.gBrowser,
-  //   win.document.getElementById("notification-popup"),
-  //   win.document.getElementById("notification-popup-box")
-  //   )
-  // );
-  /* Configuration of Study Utils*/
-  studyUtils.setup({
-    ...config,
-    addon: { id: addonData.id, version: addonData.version },
-  });
-  // choose the variation for this particular user, then set it.
-  const variation = getVariationFromPref(config.weightedVariations) ||
-    await studyUtils.deterministicVariation(
-      config.weightedVariations
-    );
-  studyUtils.setVariation(variation);
-  console.log(`studyUtils has config and variation.name: ${variation.name}.  Ready to send telemetry`);
-
-
-  /** addon_install ONLY:
-    * - note first seen,
-    * - check eligible
-    */
-  if ((REASONS[reason]) === "ADDON_INSTALL") {
-    //  telemetry "enter" ONCE
-    studyUtils.firstSeen();
-    const eligible = await config.isEligible(); // addon-specific
-    if (!eligible) {
-      // 1. uses config.endings.ineligible.url if any,
-      // 2. sends UT for "ineligible"
-      // 3. then uninstalls addon
-      await studyUtils.endStudy({reason: "ineligible"});
-      return;
-    }
-  }
-
-  // startup for eligible users.
-  // 1. sends `install` ping IFF ADDON_INSTALL.
-  // 2. sets activeExperiments in telemetry environment.
-  await studyUtils.startup({reason});
-
-  // if you have code to handle expiration / long-timers, it could go here
-  (function fakeTrackExpiration() {})();
-
-  // IFF your study has an embedded webExtension, start it.
-  const { webExtension } = addonData;
-  if (webExtension) {
-    webExtension.startup().then(api => {
-      const {browser} = api;
-      /** spec for messages intended for Shield =>
-        * {shield:true,msg=[info|endStudy|telemetry],data=data}
-        */
-      browser.runtime.onMessage.addListener(studyUtils.respondToWebExtensionMessage);
-      // other browser.runtime.onMessage handlers for your addon, if any
-    });
-  }
-
-  // log what the study variation and other info is.
-  console.log(`info ${JSON.stringify(studyUtils.info())}`);
-
-  // Actually Start up your feature
-  new Feature({variation, studyUtils, reasonName: REASONS[reason]});
 }
 
-/** Shutdown needs to distinguish between USER-DISABLE and other
-  * times that `endStudy` is called.
-  *
-  * studyUtils._isEnding means this is a '2nd shutdown'.
-  */
-function shutdown(addonData, reason) {
-  console.log("shutdown", REASONS[reason] || reason);
-  // FRAGILE: handle uninstalls initiated by USER or by addon
-  if (reason === REASONS.ADDON_UNINSTALL || reason === REASONS.ADDON_DISABLE) {
-    console.log("uninstall or disable");
-    if (!studyUtils._isEnding) {
-      // we are the first 'uninstall' requestor => must be user action.
-      console.log("probably: user requested shutdown");
-      studyUtils.endStudy({reason: "user-disable"});
-      return;
-    }
-    // normal shutdown, or 2nd uninstall request
-
-    // QA NOTE:  unload addon specific modules here.
-
-    // clean up our modules.
-    Cu.unload(CONFIGPATH);
-    Cu.unload(STUDYUTILSPATH);
-  }
+function shutdown() {
+  WindowWatcher.shutdown();
 }
 
-function uninstall(addonData, reason) {
-  console.log("uninstall", REASONS[reason] || reason);
-}
-
-function install(addonData, reason) {
-  console.log("install", REASONS[reason] || reason);
-  // handle ADDON_UPGRADE (if needful) here
-}
-
-
-
-// helper to let Dev or QA set the variation name
-function getVariationFromPref(weightedVariations) {
-  const key = "shield.test.variation";
-  const name = Services.prefs.getCharPref(key, null);
-  if (name) {
-    const variation = weightedVariations.filter(x => x.name === name)[0];
-    if (!variation) {
-      throw new Error(`about:config => shield.test.variation set to ${name}, but not variation with that name exists`);
-    }
-    return variation;
-  }
-  return name; // undefined
-}
-
-
-// logging, unfinished
-// function createLog(name, levelWord) {
-//  Cu.import("resource://gre/modules/Log.jsm");
-//  var L = Log.repository.getLogger(name);
-//  L.addAppender(new Log.ConsoleAppender(new Log.BasicFormatter()));
-//  L.level = Log.Level[levelWord] || Log.Level.Debug; // should be a config / pref
-//  return L;
-// }
-
+function uninstall() {}
