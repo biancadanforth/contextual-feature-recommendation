@@ -6,6 +6,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow", "resource:///modules/RecentWindow.jsm");
 
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+const CUSTOMPOPUP_CSS_URI = Services.io.newURI("resource://custom-popup-example-addon/custom-popup.css");
 
 /**
  * Converts an nsISupports object (returned by window observers) that
@@ -27,6 +28,7 @@ const WindowWatcher = {
     // Watch for newly-created windows
     Services.obs.addObserver(this, "xul-window-registered");
 
+
     // Inject into existing windows
     this.windowList = Services.wm.getEnumerator(null);
     while (this.windowList.hasMoreElements()) {
@@ -40,6 +42,18 @@ const WindowWatcher = {
         await this.inject(getDOMWindow(subject));
         break;
     }
+  },
+
+  insertCSS(domWindow) {
+    const utils = domWindow.QueryInterface(Ci.nsIInterfaceRequestor)
+      .getInterface(Ci.nsIDOMWindowUtils);
+    utils.loadSheet(CUSTOMPOPUP_CSS_URI, utils.AGENT_SHEET);
+  },
+
+  removeCSS(domWindow) {
+    const utils = domWindow.QueryInterface(Ci.nsIInterfaceRequestor)
+      .getInterface(Ci.nsIDOMWindowUtils);
+    utils.removeSheet(CUSTOMPOPUP_CSS_URI, utils.AGENT_SHEET);
   },
 
   shutdown() {
@@ -84,6 +98,7 @@ const WindowWatcher = {
       throw new Error(`No such element by ID ${this.popupID} exists.`);
     }
 
+    this.insertCSS(domWindow);
     await this.addPopupContent(domWindow);
   },
 
@@ -92,6 +107,7 @@ const WindowWatcher = {
     if (popupContent) {
       popupContent.remove();
     }
+    this.removeCSS(domWindow);
     // TODO bdanforth: Check if I need to remove the domWindow "load" listener from getPopupSet method
   },
 };
@@ -103,9 +119,9 @@ async function startup() {
 
   const browserWindow = RecentWindow.getMostRecentBrowserWindow();
 
-  showPopup(browserWindow);
+  // showPopup(browserWindow);
 
-  // browserWindow.setTimeout(() => showPopup(browserWindow), 500);
+  browserWindow.setTimeout(() => showPopup(browserWindow), 500);
 }
 
 function showPopup(browserWindow) {
