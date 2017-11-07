@@ -7,10 +7,11 @@ const EXPORTED_SYMBOLS = ["WindowWatcher"];
 const { utils: Cu, interfaces: Ci } = Components;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Console.jsm");
 
 // Study-specific modules
-const BASE = "custom-popup-example-addon";
-XPCOMUtils.defineLazyModuleGetter(this, "Feature", `resource://${BASE}-lib/Feature.jsm`);
+const STUDY_NAME = "custom-popup-example-addon";
+XPCOMUtils.defineLazyModuleGetter(this, "Feature", `resource://${STUDY_NAME}-lib/Feature.jsm`);
 
 /**
  * Converts an nsISupports object (returned by window observers) that

@@ -8,9 +8,9 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow", "resource:///modules/RecentWindow.jsm");
 
 // Study-specific modules
-const BASE = "custom-popup-example-addon";
-XPCOMUtils.defineLazyModuleGetter(this, "WindowWatcher", `resource://${BASE}-lib/WindowWatcher.jsm`);
-XPCOMUtils.defineLazyModuleGetter(this, "Feature", `resource://${BASE}-lib/Feature.jsm`);
+const STUDY_NAME = "custom-popup-example-addon";
+XPCOMUtils.defineLazyModuleGetter(this, "WindowWatcher", `resource://${STUDY_NAME}-lib/WindowWatcher.jsm`);
+XPCOMUtils.defineLazyModuleGetter(this, "Feature", `resource://${STUDY_NAME}-lib/Feature.jsm`);
 
 const popupID = "custom-popup-example";
 
@@ -24,7 +24,9 @@ async function startup() {
 
   const browserWindow = RecentWindow.getMostRecentBrowserWindow();
 
-  browserWindow.setTimeout(() => Feature.showPopup(browserWindow), 200);
+  browserWindow.setTimeout(async () => {
+    await Feature.showPopup(browserWindow);
+  }, 200);
 }
 
 function shutdown() {

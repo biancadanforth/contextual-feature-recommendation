@@ -2,14 +2,19 @@
 
 const EXPORTED_SYMBOLS = ["Feature"];
 
+// Firefox modules
 const { utils: Cu, interfaces: Ci } = Components;
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/Console.jsm");
+
+const STUDY_NAME = "custom-popup-example-addon";
 
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
 class Feature {
   constructor(popupID) {
     this.popupID = popupID;
+    this.recipeURL = `resource://${STUDY_NAME}-lib/Recipe.json`;
   }
 
   async getPopupSet(domWindow) {
@@ -60,32 +65,44 @@ class Feature {
     }
   }
 
-  showPopup(browserWindow) {
+  async loadRecipe(browserWindow) {
+    try {
+      const response = await browserWindow.fetch(this.recipeURL);
+      return await response.json();
+    } catch (error) {
+      return error.message;
+    }
+  }
+
+  async showPopup(browserWindow) {
+    const recipe = await this.loadRecipe(browserWindow);
+    const dC = recipe.presentation.defaultComponent;
+    const pC = recipe.presentation.panelComponent;
     browserWindow.PopupNotifications.show(
       browserWindow.gBrowser.selectedBrowser,
-      "custom-popup-example",
-      "",
+      this.popupID,
+      dC.header,
       null,
       {
-        label: "Add to Firefox",
-        accessKey: "A",
+        label: dC.action,
+        accessKey: dC.action.charAt(0),
         callback: function() {
-          console.log("You clicked 'Add to Firefox'.");
+          console.log(`You clicked '${dC.action}'.`);
         },
       },
       [
         {
-          label: "Not Now",
-          accessKey: "N",
+          label: pC.declineAction,
+          accessKey: pC.declineAction.charAt(0),
           callback: function() {
-            console.log("You clicked 'Not Now'.");
+            console.log(`You clicked '${dC.declineAction}'.`);
           },
         },
         {
-          label: "Never ask me again",
-          accessKey: "e",
+          label: pC.dropdownOptions[0].label,
+          accessKey: pC.dropdownOptions[0].label.charAt(0),
           callback: function() {
-            console.log("You clicked 'Never ask me again'.");
+            console.log(`You clicked '${pC.dropdownOptions[0].label}'.`);
           },
         },
       ],
@@ -93,10 +110,10 @@ class Feature {
         persistentWhileVisible: true,
         persistent: true,
         eventCallback: (state) => {
-          console.log(state);
+          console.log(`Panel ${state}.`);
         },
         hideClose: true,
-        popupIconURL: `resource://custom-popup-example-addon-content/extensions-16.svg`,
+        popupIconURL: `resource://${STUDY_NAME}-content/${dC.iconUrl}`,
       }
     );
   }
