@@ -1,0 +1,18 @@
+/* <Button /> */
+
+.button {
+  font-size: inherit;
+  padding: 10px;
+  cursor: pointer;
+  color: var(--primary-text-color);
+}
+
+.primary-button {
+  color: white;
+  background-color: var(--accept-button-background-color);
+  border-color: #3085d2;
+}
+
+.primary-button:hover {
+  background-color: var(--accept-button-hover-background-color);
+}
