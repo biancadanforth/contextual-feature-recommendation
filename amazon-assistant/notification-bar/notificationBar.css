@@ -13,6 +13,7 @@
 }
 
 body {
+  position: relative;
   margin: 0;
   font-family: 'Arial';
   color: var(--primary-text-color);
@@ -35,6 +36,7 @@ a {
   background-color: var(--primary-color);
   border-bottom: 1px solid var(--primary-border-color);
   box-shadow: var(--standard-box-shadow);
+  min-width: 600px;
 }
 
 .notification-bar.hidden {
@@ -44,6 +46,16 @@ a {
 .content-left-wrapper, .content-right-wrapper {
   display: flex;
   align-items: center;
+}
+
+.content-right-wrapper {
+  margin-right: 20px;
+}
+
+@media (max-width: 700px) {
+  .content-right-wrapper {
+    display: none;
+  }
 }
 
 #message {
@@ -191,6 +203,10 @@ label, .link {
 }
 
 #close-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
   fill: var(--primary-text-color);
   width: 10px;
   cursor: pointer;
