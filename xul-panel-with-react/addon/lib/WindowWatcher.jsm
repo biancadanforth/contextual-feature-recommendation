@@ -38,9 +38,9 @@ class WindowWatcher {
     Services.obs.addObserver(this, "xul-window-registered");
 
     // Inject into existing windows
-    this.windowList = Services.wm.getEnumerator(null);
-    while (this.windowList.hasMoreElements()) {
-      await this.inject(this.windowList.getNext());
+    const windowList = Services.wm.getEnumerator("navigator:browser");
+    while (windowList.hasMoreElements()) {
+      await this.inject(windowList.getNext());
     }
   }
 
@@ -56,8 +56,9 @@ class WindowWatcher {
     Services.obs.removeObserver(this, "xul-window-registered");
 
     // Clean up injected content
-    while (this.windowList.hasMoreElements()) {
-      this.uninject(this.windowList.getNext());
+    const windowList = Services.wm.getEnumerator("navigator:browser");
+    while (windowList.hasMoreElements()) {
+      this.uninject(windowList.getNext());
     }
   }
 

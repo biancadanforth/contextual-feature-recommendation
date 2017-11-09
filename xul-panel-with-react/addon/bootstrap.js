@@ -22,11 +22,16 @@ async function startup() {
 
   await WindowWatcher.startup();
 
-  const browserWindow = RecentWindow.getMostRecentBrowserWindow();
+  const browserWindow = RecentWindow.getMostRecentBrowserWindow({
+    private: false,
+    allowPopups: false,
+  });
+
+  Feature.addFrameScripts(browserWindow);
 
   browserWindow.setTimeout(async () => {
     await Feature.showPopup(browserWindow);
-  }, 200);
+  }, 500);
 }
 
 function shutdown() {

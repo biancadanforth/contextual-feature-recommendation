@@ -46,8 +46,8 @@ class Feature {
         <browser
           id="custom-popup-example-browser"
           src="resource://custom-popup-example-addon-content/panel.html"
-          type="content"
           disableglobalhistory="true"
+          type="content"
           flex="1"
           width="100%"
           height="100%"
@@ -56,17 +56,15 @@ class Feature {
       </popupnotificationcontent>
     `;
     popupSet.appendChild(popupContent);
-    const embeddedBrowser = domWindow.document.getElementById("custom-popup-example-browser");
-    this.addFrameScripts(embeddedBrowser);
   }
 
-  addFrameScripts(embeddedBrowser) {
-    console.log('entered addFrameScripts');
-    console.log(embeddedBrowser.messageManager);
+  addFrameScripts(domWindow) {
+    const embeddedBrowser = domWindow.document.getElementById("custom-popup-example-browser");
     // TODO bdanforth: Look at osmose's pioneer study to see why we have to attach a random number at the end
     embeddedBrowser.messageManager.loadFrameScript(`resource://${STUDY_NAME}-vendor/React.js?${Math.random()}`, false);
     embeddedBrowser.messageManager.loadFrameScript(`resource://${STUDY_NAME}-vendor/ReactDOM.js?${Math.random()}`, false);
     embeddedBrowser.messageManager.loadFrameScript(`resource://${STUDY_NAME}-content/UI.js?${Math.random()}`, false);
+    embeddedBrowser.messageManager.sendAsyncMessage("FocusedCFR::load");
   }
 
   removePopupContent(domWindow) {
