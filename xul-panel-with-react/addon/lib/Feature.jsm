@@ -15,6 +15,7 @@ class Feature {
   constructor(popupID) {
     this.popupID = popupID;
     this.recipeURL = `resource://${STUDY_NAME}-lib/Recipe.json`;
+    this.pageLoads = 0;
   }
 
   async getPopupSet(domWindow) {
@@ -58,23 +59,21 @@ class Feature {
     popupSet.appendChild(popupContent);
     const embeddedBrowser = domWindow.document.getElementById("custom-popup-example-browser");
     embeddedBrowser.addEventListener("load", () => {
-      console.log(embeddedBrowser.currentURI.spec);
-      console.log(embeddedBrowser.contentWindow);
-      console.log(embeddedBrowser.contentWindow.wrappedJSObject);
-      console.log(embeddedBrowser.contentWindow.wrappedJSObject.addCustomContent);
+      this.pageLoads++;
+      // about:blank loads in a <browser> before the value of its src attribute
+      // so each embeddedBrowser actually loads twice
+      if (this.pageLoads === 1) {
+        return;
+      }
+      // https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XPCOM/Language_Bindings/Components.utils.exportFunction
+      Cu.exportFunction(this.sendMessageToChrome, embeddedBrowser.contentWindow, { defineAs: "sendMessageToChrome"});
       embeddedBrowser.contentWindow.wrappedJSObject.addCustomContent();
     }, { capture: true});
-    // this.addFrameScripts(domWindow);
   }
 
-  // addFrameScripts(domWindow) {
-  //   const embeddedBrowser = domWindow.document.getElementById("custom-popup-example-browser");
-  //   TODO bdanforth: Look at osmose's pioneer study to see why we have to attach a random number at the end
-  //   embeddedBrowser.messageManager.loadFrameScript(`resource://${STUDY_NAME}-vendor/React.js?${Math.random()}`, false);
-  //   embeddedBrowser.messageManager.loadFrameScript(`resource://${STUDY_NAME}-vendor/ReactDOM.js?${Math.random()}`, false);
-  //   embeddedBrowser.messageManager.loadFrameScript(`resource://${STUDY_NAME}-content/panel.js?${Math.random()}`, false);
-  //   embeddedBrowser.messageManager.sendAsyncMessage("FocusedCFR::load");
-  // }
+  sendMessageToChrome(message) {
+    console.log(message);
+  }
 
   removePopupContent(domWindow) {
     const popupContent = domWindow.document.querySelector("#mainPopupSet #custom-popup-example-notification");
