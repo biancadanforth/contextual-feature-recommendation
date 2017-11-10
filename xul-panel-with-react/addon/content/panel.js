@@ -1,6 +1,4 @@
-// content.onload = () => addCustomContent(data);
-// import Cats from "./cats.jsx";
-// import ButtonWithDropdown from "./ButtonWithDropdown.jsx";
+let document;
 
 "use strict";
 
@@ -25,44 +23,17 @@ const self = {
 
 const sanitizeHtml = (m) => { return m; }; // disabling the sanitization. not needed. only text from the code is sent.
 
-// class App extends React.Component {
-//   constructor(props) {
-//     super(props);
-//     console.log("constructor of App");
-//   }
-
-//   render() {
-//     console.log('rendering');
-//     return (
-//       <div>
-//         Hi
-//       </div>
-//     );
-//   }
-// }
-
 function addCustomContent() {
   const appEle = content.document.getElementById("app");
   console.log(appEle);
   appEle.innerHTML = "hello";
-  // ReactDOM.render(
-  //   React.createElement(App),
-  //   content.document.getElementById("app"),
-  // );
 }
 
 self.port.on("FocusedCFR::load", (data) => {
   content.addEventListener("load", () => {
-    const appEle = content.document.getElementById("app");
+    document = content.document;
+    const appEle = document.getElementById("app");
     console.log(appEle);
     addCustomContent();
   });
-  // content.document.addEventListener("DOMContentLoaded", () => {
-  //   console.log('DOMContentLoaded');
-  //   const appEle = content.document.getElementById("app");
-  //   console.log(appEle);
-  //   addCustomContent();
-  // });
 });
-
-// self.port.emit("panel-ready");

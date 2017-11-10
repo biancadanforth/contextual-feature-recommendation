@@ -27,8 +27,6 @@ async function startup() {
     allowPopups: false,
   });
 
-  Feature.addFrameScripts(browserWindow);
-
   browserWindow.setTimeout(async () => {
     await Feature.showPopup(browserWindow);
   }, 500);
