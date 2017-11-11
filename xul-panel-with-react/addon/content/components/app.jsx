@@ -22,12 +22,14 @@ class App extends React.Component {
   }
 }
 
-window.addCustomContent = function() {
+window.addCustomContent = function(recipeJSON) {
+  const recipe = JSON.parse(recipeJSON);
+  console.log(recipe);
   ReactDOM.render(
     React.createElement(App),
     document.getElementById("app"),
   );
   // can't put this outside of this method currently, because I inject panel.html and its page scripts into about:blank too,
-  // but about:blank doesn't get addCustomContent called on it, because about:blank's 'window' object is a dead object.
+  // but about:blank doesn't get addCustomContent called on it, because about:blank's 'window' object is a
   sendMessageToChrome("AHH");
 }

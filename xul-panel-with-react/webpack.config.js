@@ -6,7 +6,7 @@ var LicenseWebpackPlugin = require("license-webpack-plugin").LicenseWebpackPlugi
 
 const bundleConfig = {
   context: __dirname,
-  entry: "./addon/content/app.jsx",
+  entry: "./addon/content/components/app.jsx",
   output: {
     path: path.resolve(__dirname, "addon/content/"),
     filename: "UI.js",

@@ -28,9 +28,9 @@ function getDOMWindow(subject) {
 }
 
 class WindowWatcher {
-  constructor(popupID) {
+  constructor(popupID, recipe) {
     this.popupID = popupID;
-    this.Feature = new Feature(popupID);
+    this.Feature = new Feature(popupID, recipe);
   }
 
   async startup() {

@@ -14,18 +14,24 @@ XPCOMUtils.defineLazyModuleGetter(this, "Feature", `resource://${STUDY_NAME}-lib
 
 const popupID = "custom-popup-example";
 
-function install() {}
+function install() {
+  // has not yet evaluated chrome.manifest
+  // install function is not actually called during the ADDON_INSTALL reason (this occurs during the start-up method).
+}
 
 async function startup() {
-  this.WindowWatcher = new WindowWatcher(popupID);
-  this.Feature = new Feature(popupID);
-
-  await WindowWatcher.startup();
 
   const browserWindow = RecentWindow.getMostRecentBrowserWindow({
     private: false,
     allowPopups: false,
   });
+
+  const recipe = await loadRecipe(browserWindow);
+
+  this.WindowWatcher = new WindowWatcher(popupID, recipe);
+  this.Feature = new Feature(popupID, recipe);
+
+  await WindowWatcher.startup();
 
   browserWindow.setTimeout(async () => {
     await Feature.showPopup(browserWindow);
@@ -37,3 +43,14 @@ function shutdown() {
 }
 
 function uninstall() {}
+
+
+async function loadRecipe(browserWindow) {
+  const recipeURL = `resource://${STUDY_NAME}-lib/Recipe.json`;
+  try {
+    const response = await browserWindow.fetch(recipeURL);
+    return await response.json();
+  } catch (error) {
+    return error.message;
+  }
+}

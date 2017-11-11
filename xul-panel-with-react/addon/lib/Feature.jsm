@@ -12,9 +12,9 @@ const STUDY_NAME = "custom-popup-example-addon";
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
 class Feature {
-  constructor(popupID) {
+  constructor(popupID, recipe) {
     this.popupID = popupID;
-    this.recipeURL = `resource://${STUDY_NAME}-lib/Recipe.json`;
+    this.recipe = recipe;
     this.pageLoads = 0;
   }
 
@@ -57,6 +57,10 @@ class Feature {
       </popupnotificationcontent>
     `;
     popupSet.appendChild(popupContent);
+    this.addBrowserContent(domWindow);
+  }
+
+  addBrowserContent(domWindow) {
     const embeddedBrowser = domWindow.document.getElementById("custom-popup-example-browser");
     embeddedBrowser.addEventListener("load", () => {
       this.pageLoads++;
@@ -67,10 +71,11 @@ class Feature {
       }
       // https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XPCOM/Language_Bindings/Components.utils.exportFunction
       Cu.exportFunction(this.sendMessageToChrome, embeddedBrowser.contentWindow, { defineAs: "sendMessageToChrome"});
-      embeddedBrowser.contentWindow.wrappedJSObject.addCustomContent();
+      embeddedBrowser.contentWindow.wrappedJSObject.addCustomContent(JSON.stringify(this.recipe));
     }, { capture: true});
   }
 
+  // This is a method my page scripts can call to pass messages to the JSM
   sendMessageToChrome(message) {
     console.log(message);
   }
@@ -82,19 +87,9 @@ class Feature {
     }
   }
 
-  async loadRecipe(browserWindow) {
-    try {
-      const response = await browserWindow.fetch(this.recipeURL);
-      return await response.json();
-    } catch (error) {
-      return error.message;
-    }
-  }
-
   async showPopup(browserWindow) {
-    const recipe = await this.loadRecipe(browserWindow);
-    const dC = recipe.presentation.defaultComponent;
-    const pC = recipe.presentation.panelComponent;
+    const dC = this.recipe.presentation.defaultComponent;
+    const pC = this.recipe.presentation.panelComponent;
     browserWindow.PopupNotifications.show(
       browserWindow.gBrowser.selectedBrowser,
       this.popupID,
