@@ -125,7 +125,7 @@ class Feature {
           console.log(`Panel ${state}.`);
         },
         hideClose: true,
-        popupIconURL: `resource://${STUDY_NAME}-content/${dC.iconUrl}`,
+        popupIconURL: `resource://${STUDY_NAME}-content/img/${dC.iconUrl}`,
       }
     );
   }

@@ -11,20 +11,34 @@ const sanitizeHtml = (m) => { return m; }; // disabling the sanitization. not ne
 class App extends React.Component {
   constructor(props) {
     super(props);
+    // store all events we want to track in this component in state for debugging using React devtools
+    this.state = {
+      actionButtonClicked: false,
+      declineButtonClicked: false,
+      dropdownItemClicked: false,
+      learnMoreLinkClicked: false,
+    };
+    this.STUDY_NAME = "custom-popup-example-addon";
   }
 
   render() {
+    // convert relative to absolute URL for images
+    const iconUrl = `resource://${this.STUDY_NAME}-content/img/${dC.iconUrl}`;
+    // const rationaleUrl = require.context("./img")(`${ dC.rationaleIconUrl }`);
+    // const ratingUrl = require.context("./img")(`${ dC.ratingUrl }`);
     return (
       <div>
         Hi
+        <img src={ iconUrl } />
       </div>
     );
   }
 }
 
 window.addCustomContent = function(recipeJSON) {
-  const recipe = JSON.parse(recipeJSON);
-  console.log(recipe);
+  this.recipe = JSON.parse(recipeJSON);
+  this.dC = this.recipe.presentation.defaultComponent;
+  this.pC = this.recipe.presentation.panelComponent;
   ReactDOM.render(
     React.createElement(App),
     document.getElementById("app"),
