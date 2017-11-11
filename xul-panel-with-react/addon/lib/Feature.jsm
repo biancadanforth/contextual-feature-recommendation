@@ -50,8 +50,6 @@ class Feature {
           disableglobalhistory="true"
           type="content"
           flex="1"
-          width="100%"
-          height="100%"
         >
         </browser>
       </popupnotificationcontent>
@@ -61,8 +59,8 @@ class Feature {
   }
 
   addBrowserContent(domWindow) {
-    const embeddedBrowser = domWindow.document.getElementById("custom-popup-example-browser");
-    embeddedBrowser.addEventListener("load", () => {
+    this.embeddedBrowser = domWindow.document.getElementById("custom-popup-example-browser");
+    this.embeddedBrowser.addEventListener("load", () => {
       this.pageLoads++;
       // about:blank loads in a <browser> before the value of its src attribute
       // so each embeddedBrowser actually loads twice
@@ -70,14 +68,25 @@ class Feature {
         return;
       }
       // https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XPCOM/Language_Bindings/Components.utils.exportFunction
-      Cu.exportFunction(this.sendMessageToChrome, embeddedBrowser.contentWindow, { defineAs: "sendMessageToChrome"});
-      embeddedBrowser.contentWindow.wrappedJSObject.addCustomContent(JSON.stringify(this.recipe));
+      Cu.exportFunction(this.sendMessageToChrome.bind(this), this.embeddedBrowser.contentWindow, { defineAs: "sendMessageToChrome"});
+      this.embeddedBrowser.contentWindow.wrappedJSObject.addCustomContent(JSON.stringify(this.recipe));
     }, { capture: true});
   }
 
   // This is a method my page scripts can call to pass messages to the JSM
-  sendMessageToChrome(message) {
-    console.log(message);
+  sendMessageToChrome(message, data) {
+    switch (message) {
+      case "CFR::BrowserResize":
+        this.resizeBrowser(JSON.parse(data));
+        break;
+    }
+  }
+
+  // <browser> height must be set explicitly, so base it off the content dimensions
+  resizeBrowser(dimensions) {
+    console.log(dimensions);
+    this.embeddedBrowser.style.width = `${ dimensions.width }px`;
+    this.embeddedBrowser.style.height = `${ dimensions.height }px`;
   }
 
   removePopupContent(domWindow) {

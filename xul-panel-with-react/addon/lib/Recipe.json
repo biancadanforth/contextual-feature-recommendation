@@ -14,7 +14,7 @@
       "rationaleIconUrl": "./question-mark.svg",
       "rationale": "This is a sponsored suggestion. You are seeing this because you visit Amazon.com frequently.",
       "rating": 4,
-      "ratingUrl": "./fourStars.png",
+      "ratingUrl": "./four-stars.png",
       "ratingAltText": "Addon rating"
     },
     "panelComponent": {
@@ -30,7 +30,7 @@
         }
       ],
       "userCount": "398,277 users",
-      "heroUrl": "https://addons.cdn.mozilla.net/user-media/addon_icons/337/337359-64.png?modified=1507252821",
+      "heroUrl": "amazon-assistant.png",
       "heroAltText": "Amazon Assistant"
     }
   }
