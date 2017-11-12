@@ -1,0 +1,37 @@
+{
+  "triggers":  {
+  },
+  "presentation": {
+    "defaultComponent": {
+      "iconUrl": "extensions-16.svg",
+      "iconAltText": "Addons logo",
+      "header": "You might like the Amazon Assistant extension since you visit this site frequently.",
+      "summary": "Instant product matches while you shop across the web. ",
+      "action": "Add to Firefox",
+      "actionUrl": "",                
+      "learnMore": "Learn more",
+      "learnMoreUrl": "http://amazon.com",
+      "rationaleIconUrl": "./question-mark.svg",
+      "rationale": "This is a sponsored suggestion. You are seeing this because you visit Amazon.com frequently.",
+      "rating": 4,
+      "ratingUrl": "./four-stars.png",
+      "ratingAltText": "Addon rating"
+    },
+    "panelComponent": {
+      "declineAction": "Not Now",
+      "dropdownOptions": [
+        {
+          "id": "dont-show",
+          "label": "Don't show me this again" 
+        },
+        {
+          "id": "harry-potter",
+          "label": "Harry Potter is a wizard."
+        }
+      ],
+      "userCount": "398,277 users",
+      "heroUrl": "amazon-assistant.png",
+      "heroAltText": "Amazon Assistant"
+    }
+  }
+}

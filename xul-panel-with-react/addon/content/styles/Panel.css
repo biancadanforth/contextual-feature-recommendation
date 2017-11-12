@@ -1,0 +1,44 @@
+/* :root vars from https://github.com/biancadanforth/contextual-feature-recommendation/blob/master/amazon-assistant/notification-bar/notificationBar.css */
+:root {
+  --primary-color: #fcfcfc;
+  --primary-text-color: #6f6f6f;
+  --link-text-color: #0094fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-size: .75em;
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  background-color: var(--primary-color);
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: #5fbdf8;
+}
+
+/* ----- Middle section  ----- */
+
+.section-middle {
+  padding-top: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.section-middle div {
+  margin-left: 15px;
+}
+
+.users {
+  display: inline-block;
+  margin-left: 5px;
+  color: #a3a3a3;
+}
