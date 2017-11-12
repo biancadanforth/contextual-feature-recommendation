@@ -24,7 +24,7 @@ class Panel extends React.Component {
   // dims are not final until load
   handleLoad() {
     const dimensions = this.getPanelDimensions();
-    sendMessageToChrome("CFR::BrowserResize", JSON.stringify(dimensions));
+    sendMessageToChrome("FocusedCFR::browserResize", JSON.stringify(dimensions));
   }
 
   getPanelDimensions() {
@@ -47,10 +47,11 @@ class Panel extends React.Component {
           <div>
             <p className="summary">{ dC.summary }
               <a
+                target="_blank"
                 href={ dC.learnMoreUrl }
                 onClick={ () => {
                   this.setState({ learnMoreLinkClicked: true });
-                  console.log("self.port.emit('FocusedCFR::openUrl')", `url: ${dC.learnMoreUrl}` );
+                  sendMessageToChrome("FocusedCFR::openUrl", dC.learnMoreUrl);
                 }}
               >
                 { dC.learnMore }

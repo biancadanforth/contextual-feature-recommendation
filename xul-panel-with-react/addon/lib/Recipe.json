@@ -10,7 +10,7 @@
       "action": "Add to Firefox",
       "actionUrl": "",                
       "learnMore": "Learn more",
-      "learnMoreUrl": "#",
+      "learnMoreUrl": "http://amazon.com",
       "rationaleIconUrl": "./question-mark.svg",
       "rationale": "This is a sponsored suggestion. You are seeing this because you visit Amazon.com frequently.",
       "rating": 4,

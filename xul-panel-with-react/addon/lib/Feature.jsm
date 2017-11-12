@@ -15,7 +15,6 @@ class Feature {
   constructor(popupID, recipe) {
     this.popupID = popupID;
     this.recipe = recipe;
-    this.pageLoads = 0;
   }
 
   async getPopupSet(domWindow) {
@@ -61,10 +60,10 @@ class Feature {
   addBrowserContent(domWindow) {
     this.embeddedBrowser = domWindow.document.getElementById("custom-popup-example-browser");
     this.embeddedBrowser.addEventListener("load", () => {
-      this.pageLoads++;
       // about:blank loads in a <browser> before the value of its src attribute
       // so each embeddedBrowser actually loads twice
-      if (this.pageLoads === 1) {
+      // make sure we are only accessing our src page, not about:blank, where contentWindow is a dead object
+      if (!this.embeddedBrowser.contentWindow) {
         return;
       }
       // https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XPCOM/Language_Bindings/Components.utils.exportFunction
@@ -76,7 +75,10 @@ class Feature {
   // This is a method my page scripts can call to pass messages to the JSM
   sendMessageToChrome(message, data) {
     switch (message) {
-      case "CFR::BrowserResize":
+      case "FocusedCFR::openUrl":
+        console.log(message, data);
+        break;
+      case "FocusedCFR::browserResize":
         this.resizeBrowser(JSON.parse(data));
         break;
     }
@@ -84,7 +86,6 @@ class Feature {
 
   // <browser> height must be set explicitly, so base it off the content dimensions
   resizeBrowser(dimensions) {
-    console.log(dimensions);
     this.embeddedBrowser.style.width = `${ dimensions.width }px`;
     this.embeddedBrowser.style.height = `${ dimensions.height }px`;
   }
@@ -108,7 +109,7 @@ class Feature {
         label: dC.action,
         accessKey: dC.action.charAt(0),
         callback: function() {
-          console.log(`You clicked '${dC.action}'.`);
+          console.log("FocusedCFR::action");
         },
       },
       [
@@ -116,14 +117,14 @@ class Feature {
           label: pC.declineAction,
           accessKey: pC.declineAction.charAt(0),
           callback: function() {
-            console.log(`You clicked '${dC.declineAction}'.`);
+            console.log("FocusedCFR::dismiss");
           },
         },
         {
           label: pC.dropdownOptions[0].label,
           accessKey: pC.dropdownOptions[0].label.charAt(0),
           callback: function() {
-            console.log(`You clicked '${pC.dropdownOptions[0].label}'.`);
+            console.log("FocusedCFR::close");
           },
         },
       ],
