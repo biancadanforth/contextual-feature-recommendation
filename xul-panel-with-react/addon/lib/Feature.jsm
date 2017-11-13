@@ -15,6 +15,7 @@ class Feature {
   constructor(popupID, recipe) {
     this.popupID = popupID;
     this.recipe = recipe;
+    this.setPopupArguments();
   }
 
   async getPopupSet(domWindow) {
@@ -66,22 +67,17 @@ class Feature {
       if (!this.embeddedBrowser.contentWindow) {
         return;
       }
+      // enable messaging from page script to JSM
       // https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XPCOM/Language_Bindings/Components.utils.exportFunction
       Cu.exportFunction(this.sendMessageToChrome.bind(this), this.embeddedBrowser.contentWindow, { defineAs: "sendMessageToChrome"});
+      // call a method in the page script from the JSM
       this.embeddedBrowser.contentWindow.wrappedJSObject.addCustomContent(JSON.stringify(this.recipe));
     }, { capture: true});
   }
 
   // This is a method my page scripts can call to pass messages to the JSM
   sendMessageToChrome(message, data) {
-    switch (message) {
-      case "FocusedCFR::openUrl":
-        console.log(message, data);
-        break;
-      case "FocusedCFR::browserResize":
-        this.resizeBrowser(JSON.parse(data));
-        break;
-    }
+    this.handleUIEvent(message, data);
   }
 
   // <browser> height must be set explicitly, so base it off the content dimensions
@@ -97,46 +93,77 @@ class Feature {
     }
   }
 
-  async showPopup(browserWindow) {
+  handleUIEvent(message, data) {
+    switch (message) {
+      case "FocusedCFR::action":
+        console.log(message);
+        break;
+      case "FocusedCFR::dismiss":
+        console.log(message);
+        break;
+      case "FocusedCFR::close":
+        console.log(message);
+        break;
+      case "FocusedCFR::openUrl":
+        console.log(message, data);
+        break;
+      case "FocusedCFR::browserResize":
+        this.resizeBrowser(JSON.parse(data));
+        break;
+      case "FocusedCFR::panelState":
+        console.log(`Panel ${data}`);
+        break;
+    }
+  }
+
+  setPopupArguments() {
     const dC = this.recipe.presentation.defaultComponent;
     const pC = this.recipe.presentation.panelComponent;
+    this.anchor = null;
+    this.message = dC.header;
+    this.mainAction = {
+      label: dC.action,
+      accessKey: dC.action.charAt(0),
+      callback: () => {
+        this.handleUIEvent("FocusedCFR::action");
+      },
+    };
+    this.secondaryActions = [
+      {
+        label: pC.declineAction,
+        accessKey: pC.declineAction.charAt(0),
+        callback: () => {
+          this.handleUIEvent("FocusedCFR::dismiss");
+        },
+      },
+      {
+        label: pC.dropdownOptions[0].label,
+        accessKey: pC.dropdownOptions[0].label.charAt(0),
+        callback: () => {
+          this.handleUIEvent("FocusedCFR::close");
+        },
+      },
+    ];
+    this.options = {
+      persistentWhileVisible: true,
+      persistent: true,
+      eventCallback: (state) => {
+        this.handleUIEvent("FocusedCFR::panelState", state);
+      },
+      hideClose: true,
+      popupIconURL: `resource://${STUDY_NAME}-content/img/${dC.iconUrl}`,
+    };
+  }
+
+  showPopup(browserWindow) {
     browserWindow.PopupNotifications.show(
       browserWindow.gBrowser.selectedBrowser,
       this.popupID,
-      dC.header,
-      null,
-      {
-        label: dC.action,
-        accessKey: dC.action.charAt(0),
-        callback: function() {
-          console.log("FocusedCFR::action");
-        },
-      },
-      [
-        {
-          label: pC.declineAction,
-          accessKey: pC.declineAction.charAt(0),
-          callback: function() {
-            console.log("FocusedCFR::dismiss");
-          },
-        },
-        {
-          label: pC.dropdownOptions[0].label,
-          accessKey: pC.dropdownOptions[0].label.charAt(0),
-          callback: function() {
-            console.log("FocusedCFR::close");
-          },
-        },
-      ],
-      {
-        persistentWhileVisible: true,
-        persistent: true,
-        eventCallback: (state) => {
-          console.log(`Panel ${state}.`);
-        },
-        hideClose: true,
-        popupIconURL: `resource://${STUDY_NAME}-content/img/${dC.iconUrl}`,
-      }
+      this.message,
+      this.anchor,
+      this.mainAction,
+      this.secondaryActions,
+      this.options,
     );
   }
 }
