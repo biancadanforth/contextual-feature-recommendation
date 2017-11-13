@@ -33,8 +33,8 @@ async function startup() {
 
   await WindowWatcher.startup();
 
-  browserWindow.setTimeout(async () => {
-    await Feature.showPopup(browserWindow);
+  browserWindow.setTimeout(() => {
+    Feature.showPopup(browserWindow);
   }, 500);
 }
 
