@@ -1,5 +1,9 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
-/* global Feature */
+/* global CleanupManager */
 
 const EXPORTED_SYMBOLS = ["WindowWatcher"];
 
@@ -11,7 +15,8 @@ Cu.import("resource://gre/modules/Console.jsm");
 
 // Study-specific modules
 const STUDY_NAME = "custom-popup-example-addon";
-XPCOMUtils.defineLazyModuleGetter(this, "Feature", `resource://${STUDY_NAME}-lib/Feature.jsm`);
+XPCOMUtils.defineLazyModuleGetter(this, "CleanupManager",
+  `resource://${STUDY_NAME}-lib/CleanupManager.jsm`);
 
 /**
  * Converts an nsISupports object (returned by window observers) that
@@ -28,46 +33,61 @@ function getDOMWindow(subject) {
 }
 
 class WindowWatcher {
-  constructor(popupID, recipe) {
-    this.popupID = popupID;
-    this.Feature = new Feature(popupID, recipe);
+  constructor(Feature) {
+    this.Feature = Feature;
   }
 
   async startup() {
     // Watch for newly-created windows
     Services.obs.addObserver(this, "xul-window-registered");
+    CleanupManager.addCleanupHandler(() => {
+      // Remove listener on shutdown
+      Services.obs.removeObserver(this, "xul-window-registered");
+    });
 
     // Inject into existing windows
     const windowList = Services.wm.getEnumerator("navigator:browser");
     while (windowList.hasMoreElements()) {
       await this.inject(windowList.getNext());
     }
+    CleanupManager.addCleanupHandler(() => {
+      // Clean up injected content on shutdown with updated window list
+      const windowListCleanup = Services.wm
+        .getEnumerator("navigator:browser");
+      while (windowListCleanup.hasMoreElements()) {
+        this.uninject(windowListCleanup.getNext());
+      }
+    });
   }
 
   async observe(subject, topic, data) {
+    let xulWindow;
     switch (topic) {
       case "xul-window-registered":
-        await this.inject(getDOMWindow(subject));
+        xulWindow = getDOMWindow(subject);
+        await new Promise(resolve => {
+          // don't need to remove this listener, as window load only 
+          // ever occurs once this event gets garbage collected when
+          // the window is unloaded  
+          xulWindow.addEventListener("load", async () => {
+            // don't inject popup into non-browser windows (ex: devtools)
+            if (xulWindow.document.documentElement.getAttribute("windowtype")
+              !== "navigator:browser") {
+              return;
+            }
+            await this.inject(xulWindow);
+          });
+        });
         break;
     }
   }
 
-  shutdown() {
-    Services.obs.removeObserver(this, "xul-window-registered");
-
-    // Clean up injected content
-    const windowList = Services.wm.getEnumerator("navigator:browser");
-    while (windowList.hasMoreElements()) {
-      this.uninject(windowList.getNext());
-    }
-  }
-
   async inject(domWindow) {
-    if (domWindow.document.getElementById(this.popupID)) {
-      throw new Error(`No such element by ID ${this.popupID} exists.`);
+    try {
+      await this.Feature.addPopupContent(domWindow);
+    } catch (error) {
+      throw new Error(`Unable to inject content into window: ${error}`);
     }
-
-    await this.Feature.addPopupContent(domWindow);
   }
 
   uninject(domWindow) {
