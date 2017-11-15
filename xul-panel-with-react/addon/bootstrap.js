@@ -24,8 +24,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "Feature",
 XPCOMUtils.defineLazyModuleGetter(this, "CleanupManager",
   `resource://${STUDY_NAME}-lib/CleanupManager.jsm`);
 
-const popupID = "custom-popup-example";
-let popupShowTimer;
+const POPUP_ID = "custom-popup-example";
+let POPUP_SHOW_TIMER;
 
 function install() {
   // has not yet evaluated chrome.manifest
@@ -40,41 +40,52 @@ async function startup() {
     allowPopups: false,
   });
 
-  const recipe = await loadRecipe(browserWindow);
+  const recommendationConfig = await loadRecommendationConfig(browserWindow);
 
-  this.Feature = new Feature(popupID, recipe);
+  this.Feature = new Feature({ POPUP_ID, recommendationConfig });
   this.WindowWatcher = new WindowWatcher(this.Feature);
 
-  await WindowWatcher.startup();
+  await this.WindowWatcher.startup();
 
   // Add timer to show popup
-  popupShowTimer = browserWindow.setTimeout(() => {
-    Feature.showPopup(browserWindow);
+  // Note: Showing the popup should not require a timer;
+  // listen for the right event on Firefox startup. See Issue #6
+  POPUP_SHOW_TIMER = browserWindow.setTimeout(() => {
+    this.Feature.showPopup(browserWindow);
     // If timer expires, don't clear it on clean up
     // (timerID could be reassigned?)
-    CleanupManager.removeCleanupHandler(() => {
-      browserWindow.clearTimeout(popupShowTimer);
-      popupShowTimer = null;
+    CleanupManager.removeCleanupHandler({
+      name: "clearPopupShowTimer",
+      function: () => {
+        browserWindow.clearTimeout(POPUP_SHOW_TIMER);
+        POPUP_SHOW_TIMER = null;
+      },
     });
   }, 500);
   // Reset timer on shutdown if it hasn't yet expired
-  CleanupManager.addCleanupHandler(() => {
-    browserWindow.clearTimeout(popupShowTimer);
-    popupShowTimer = null;
+  CleanupManager.addCleanupHandler({
+    name: "clearPopupShowTimer",
+    function: () => {
+      browserWindow.clearTimeout(POPUP_SHOW_TIMER);
+      POPUP_SHOW_TIMER = null;
+    },
   });
 }
 
 async function shutdown() {
+  // TODO bdanforth: add a note in some obvious place and create issue (reference here)
+  // idea: List all handlers (what module they come from, or functions passed into CleanupManager have module names in them)
+  // pass NAMED functions to set, they will show up if you console.log set. so on debug for QA they can check that cleanup exists
   await CleanupManager.cleanup();
 }
 
 function uninstall() {}
 
 
-async function loadRecipe(browserWindow) {
-  const recipeURL = `resource://${STUDY_NAME}-lib/Recipe.json`;
+async function loadRecommendationConfig(browserWindow) {
+  const recommendationConfigURL = `resource://${STUDY_NAME}-lib/RecommendationConfig.json`;
   try {
-    const response = await browserWindow.fetch(recipeURL);
+    const response = await browserWindow.fetch(recommendationConfigURL);
     return await response.json();
   } catch (error) {
     return error.message;

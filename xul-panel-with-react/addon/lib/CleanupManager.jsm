@@ -8,6 +8,7 @@
 
 const {utils: Cu} = Components;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Console.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(
   this,
@@ -23,10 +24,16 @@ class CleanupManagerClass {
     this.cleanupPromise = null;
   }
 
+  // @param { Object }
+  // @param handler.name - name of the function to execute on cleanup
+  // @param handler.function - function to execute on cleanup
   addCleanupHandler(handler) {
     this.handlers.add(handler);
   }
 
+  // @param { Object }
+  // @param handler.name - name of the function to execute on cleanup
+  // @param handler.function - function to execute on cleanup
   removeCleanupHandler(handler) {
     this.handlers.delete(handler);
   }
@@ -34,9 +41,11 @@ class CleanupManagerClass {
   async cleanup() {
     if (this.cleanupPromise === null) {
       this.cleanupPromise = (async () => {
+        console.log("List of cleanup operations: ");
         for (const handler of this.handlers) {
           try {
-            await handler();
+            console.log(handler.name);
+            await handler.function();
           } catch (ex) {
             Cu.reportError(ex);
           }

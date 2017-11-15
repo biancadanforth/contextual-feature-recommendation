@@ -40,9 +40,12 @@ class WindowWatcher {
   async startup() {
     // Watch for newly-created windows
     Services.obs.addObserver(this, "xul-window-registered");
-    CleanupManager.addCleanupHandler(() => {
-      // Remove listener on shutdown
-      Services.obs.removeObserver(this, "xul-window-registered");
+    CleanupManager.addCleanupHandler({
+      name: "removeXulWindowRegisteredObserver",
+      function: () => {
+        // Remove listener on shutdown
+        Services.obs.removeObserver(this, "xul-window-registered");
+      },
     });
 
     // Inject into existing windows
@@ -50,13 +53,16 @@ class WindowWatcher {
     while (windowList.hasMoreElements()) {
       await this.inject(windowList.getNext());
     }
-    CleanupManager.addCleanupHandler(() => {
-      // Clean up injected content on shutdown with updated window list
-      const windowListCleanup = Services.wm
-        .getEnumerator("navigator:browser");
-      while (windowListCleanup.hasMoreElements()) {
-        this.uninject(windowListCleanup.getNext());
-      }
+    CleanupManager.addCleanupHandler({
+      name: "uninjectCustomXulElementsFromChrome",
+      function: () => {
+        // Clean up injected content on shutdown with updated window list
+        const windowListCleanup = Services.wm
+          .getEnumerator("navigator:browser");
+        while (windowListCleanup.hasMoreElements()) {
+          this.uninject(windowListCleanup.getNext());
+        }
+      },
     });
   }
 
@@ -65,21 +71,36 @@ class WindowWatcher {
     switch (topic) {
       case "xul-window-registered":
         xulWindow = getDOMWindow(subject);
-        await new Promise(resolve => {
+        await new Promise(() => {
           // don't need to remove this listener, as window load only 
-          // ever occurs once this event gets garbage collected when
-          // the window is unloaded  
-          xulWindow.addEventListener("load", async () => {
-            // don't inject popup into non-browser windows (ex: devtools)
-            if (xulWindow.document.documentElement.getAttribute("windowtype")
-              !== "navigator:browser") {
-              return;
-            }
-            await this.inject(xulWindow);
+          // ever occurs once, and this event gets garbage collected when
+          // the window is unloaded
+          // however for mozilla eslint rule "balanced listeners", will remove  
+          xulWindow.addEventListener(
+            "load",
+            this.handleXulWindowLoad.bind(this, xulWindow)
+          );
+          CleanupManager.addCleanupHandler({
+            name: "removeXulWindowLoadListener",
+            function: () => {
+              xulWindow.removeEventListener(
+                "load",
+                this.handleXulWindowLoad.bind(this, xulWindow)
+              );
+            },
           });
         });
         break;
     }
+  }
+
+  async handleXulWindowLoad(xulWindow) {
+    // don't inject popup into non-browser windows (ex: devtools)
+    if (xulWindow.document.documentElement.getAttribute("windowtype")
+      !== "navigator:browser") {
+      return;
+    }
+    await this.inject(xulWindow);
   }
 
   async inject(domWindow) {

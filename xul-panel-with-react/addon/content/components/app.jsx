@@ -81,10 +81,10 @@ class Panel extends React.Component {
 
 // Have to explicitly attach this function to 'window',
 // since webpack bundles and wraps all scripts in an IIFE
-window.addCustomContent = function(recipeJSON) {
-  this.recipe = JSON.parse(recipeJSON);
-  this.dC = this.recipe.presentation.defaultComponent;
-  this.pC = this.recipe.presentation.panelComponent;
+window.addCustomContent = function(recommendationConfigJSON) {
+  this.recommendationConfig = JSON.parse(recommendationConfigJSON);
+  this.dC = this.recommendationConfig.presentation.defaultComponent;
+  this.pC = this.recommendationConfig.presentation.panelComponent;
   ReactDOM.render(
     React.createElement(Panel),
     document.getElementById("panel"),
