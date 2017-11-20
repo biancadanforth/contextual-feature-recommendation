@@ -19,6 +19,29 @@ XPCOMUtils.defineLazyModuleGetter(this, "CleanupManager",
   `resource://${STUDY_NAME}-lib/CleanupManager.jsm`);
 
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+const PANEL_CSS_URI = Services.io.newURI(
+  `resource://${STUDY_NAME}-skin/Feature.css`
+);
+
+const windowsWithInjectedCss = new WeakSet();
+let anyWindowsWithInjectedCss = false;
+
+// Add cleanup handler for CSS injected into windows by Feature
+CleanupManager.addCleanupHandler(() => {
+  if (anyWindowsWithInjectedCss) {
+    const windowEnumerator = Services.wm.getEnumerator("navigator:browser");
+    while (windowEnumerator.hasMoreElements()) {
+      const domWindow = windowEnumerator.getNext();
+      if (windowsWithInjectedCss.has(domWindow)) {
+        const utils = domWindow.QueryInterface(Ci.nsIInterfaceRequestor)
+          .getInterface(Ci.nsIDOMWindowUtils);
+        utils.removeSheet(PANEL_CSS_URI, domWindow.AGENT_SHEET);
+        windowsWithInjectedCss.delete(domWindow);
+      }
+    }
+  }
+});
+
 
 class Feature {
   constructor(config) {
@@ -66,6 +89,17 @@ class Feature {
     popupContent.appendChild(popupnotificationcontentEle);
     popupSet.appendChild(popupContent);
     this.addBrowserContent(domWindow);
+    this.addXulStylesheet(domWindow);
+  }
+
+  addXulStylesheet(domWindow) {
+    if (!windowsWithInjectedCss.has(domWindow)) {
+      windowsWithInjectedCss.add(domWindow);
+      const utils = domWindow.QueryInterface(Ci.nsIInterfaceRequestor)
+        .getInterface(Ci.nsIDOMWindowUtils);
+      utils.loadSheet(PANEL_CSS_URI, domWindow.AGENT_SHEET);
+      anyWindowsWithInjectedCss = true;
+    }
   }
 
   addBrowserContent(domWindow) {
