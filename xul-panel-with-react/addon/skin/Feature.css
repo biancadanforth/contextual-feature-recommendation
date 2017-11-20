@@ -1,3 +1,7 @@
+/*
+* Hide XUL elements <xul:image> and <xul:description> from PopupNotifications.show(),
+* so this can be a part of the <browser> element (React application)
+*/
 #custom-popup-example-notification .popup-notification-icon,
 #custom-popup-example-notification .popup-notification-description {
   display: none;
