@@ -36,14 +36,40 @@ class Panel extends React.Component {
   }
 
   render() {
-    // convert relative to absolute URL for images
+    // Convert relative to absolute URL for images
     const urlPrefix = `resource://${this.STUDY_NAME}-content/img/`;
-    const rationaleUrl = `${urlPrefix}${dC.rationaleUrl}`;
+    const iconUrl = `${urlPrefix}${dC.iconUrl}`;
+    const rationaleUrl = `${urlPrefix}${dC.rationaleIconUrl}`;
     const ratingUrl = `${urlPrefix}${dC.ratingUrl}`;
     const heroUrl = `${urlPrefix}${pC.heroUrl}`;
 
+    // Bold the text to emphasize in the Header
+    const header = dC.header;
+    const headerEmphasis = dC.headerEmphasis;
+    const headerComponents = header.split(headerEmphasis);
+
     return (
       <div className="Panel" onLoad={ this.handleLoad.bind(this) }>
+        <section className="section-top">
+          <img
+            className="icon"
+            src={ iconUrl }
+            alt={ dC.iconAltText }
+          />
+          {/* Header */}
+          <p>
+            {headerComponents[0]}
+            <strong>
+              {headerEmphasis}
+            </strong>
+            {headerComponents[1]}
+          </p>
+          <img 
+            className="rationale"
+            src={ rationaleUrl }
+            alt="Rationale"
+          />
+        </section>
         <section className="section-middle">
           <img
             className="hero"

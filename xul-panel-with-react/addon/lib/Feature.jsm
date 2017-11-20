@@ -19,6 +19,12 @@ XPCOMUtils.defineLazyModuleGetter(this, "CleanupManager",
   `resource://${STUDY_NAME}-lib/CleanupManager.jsm`);
 
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+const PANEL_CSS_URI = Services.io.newURI(
+  `resource://${STUDY_NAME}-skin/Feature.css`
+);
+
+const windowsWithInjectedCss = new WeakSet();
+let anyWindowsWithInjectedCss = false;
 
 class Feature {
   constructor(config) {
@@ -46,26 +52,69 @@ class Feature {
   // Insert custom XUL content into panel, including <browser> element
   async addPopupContent(domWindow) {
     const popupSet = await this.getPopupSet(domWindow);
+    // create <popupnotification>
     const popupContent = domWindow.document
       .createElementNS(XUL_NS, "popupnotification");
     popupContent.hidden = true;
     popupContent.id = `${this.popupID}-notification`;
+    // create <popupnotificationcontent> for <popupnotification>
     const popupnotificationcontentEle = domWindow.document
       .createElementNS(XUL_NS, "popupnotificationcontent");
     popupnotificationcontentEle.setAttribute("class", `${this.popupID}-content`);
     popupnotificationcontentEle.setAttribute("orient", "vertical");
     popupnotificationcontentEle.setAttribute("style", "margin:0");
-    const embeddedBrowser = domWindow.document
-      .createElementNS(XUL_NS, "browser");
+    // create <tooltip> for <popupnotificationcontent>
+    const tooltipEle = domWindow.document.createElementNS(XUL_NS, "tooltip");
+    tooltipEle.setAttribute("id", `${this.popupID}-tooltip`);
+    tooltipEle.setAttribute("orient", "vertical");
+    // create <label> for <tooltip>
+    const labelEle = domWindow.document.createElementNS(XUL_NS, "label");
+    const dC = this.recommendationConfig.presentation.defaultComponent;
+    labelEle.setAttribute("value", `${dC.rationale}`);
+    // create <browser> for <popupnotification>
+    const embeddedBrowser = domWindow.document.createElementNS(XUL_NS, "browser");
     embeddedBrowser.setAttribute("id", `${this.popupID}-browser`);
     embeddedBrowser.setAttribute("src", `resource://${STUDY_NAME}-content/panel.html`);
     embeddedBrowser.setAttribute("disableglobalhistory", "true");
     embeddedBrowser.setAttribute("type", "content");
     embeddedBrowser.setAttribute("flex", "1");
+    embeddedBrowser.setAttribute("tooltip", `${this.popupID}-tooltip`);
+    // attach elements to each other and the parent XUL document
+    tooltipEle.appendChild(labelEle);
+    popupnotificationcontentEle.appendChild(tooltipEle);
     popupnotificationcontentEle.appendChild(embeddedBrowser);
     popupContent.appendChild(popupnotificationcontentEle);
     popupSet.appendChild(popupContent);
     this.addBrowserContent(domWindow);
+    this.addXulStylesheet(domWindow);
+  }
+
+  addXulStylesheet(domWindow) {
+    if (!windowsWithInjectedCss.has(domWindow)) {
+      windowsWithInjectedCss.add(domWindow);
+      const utils = domWindow.QueryInterface(Ci.nsIInterfaceRequestor)
+        .getInterface(Ci.nsIDOMWindowUtils);
+      utils.loadSheet(PANEL_CSS_URI, domWindow.AGENT_SHEET);
+      anyWindowsWithInjectedCss = true;
+    }
+    // Add cleanup handler for CSS injected into windows by Feature
+    CleanupManager.addCleanupHandler({
+      name: "removeCustomXulStylesheets",
+      function: () => {
+        if (anyWindowsWithInjectedCss) {
+          const windowEnumerator = Services.wm.getEnumerator("navigator:browser");
+          while (windowEnumerator.hasMoreElements()) {
+            const window = windowEnumerator.getNext();
+            if (windowsWithInjectedCss.has(window)) {
+              const utils = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                .getInterface(Ci.nsIDOMWindowUtils);
+              utils.removeSheet(PANEL_CSS_URI, window.AGENT_SHEET);
+              windowsWithInjectedCss.delete(window);
+            }
+          }
+        }
+      },
+    });
   }
 
   addBrowserContent(domWindow) {
