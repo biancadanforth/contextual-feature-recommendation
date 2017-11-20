@@ -69,22 +69,36 @@ class Feature {
   // Insert custom XUL content into panel, including <browser> element
   async addPopupContent(domWindow) {
     const popupSet = await this.getPopupSet(domWindow);
+    // create <popupnotification>
     const popupContent = domWindow.document
       .createElementNS(XUL_NS, "popupnotification");
     popupContent.hidden = true;
     popupContent.id = `${this.popupID}-notification`;
+    // create <popupnotificationcontent> for <popupnotification>
     const popupnotificationcontentEle = domWindow.document
       .createElementNS(XUL_NS, "popupnotificationcontent");
     popupnotificationcontentEle.setAttribute("class", `${this.popupID}-content`);
     popupnotificationcontentEle.setAttribute("orient", "vertical");
     popupnotificationcontentEle.setAttribute("style", "margin:0");
-    const embeddedBrowser = domWindow.document
-      .createElementNS(XUL_NS, "browser");
+    // create <tooltip> for <popupnotificationcontent>
+    const tooltipEle = domWindow.document.createElementNS(XUL_NS, "tooltip");
+    tooltipEle.setAttribute("id", `${this.popupID}-tooltip`);
+    tooltipEle.setAttribute("orient", "vertical");
+    // create <label> for <tooltip>
+    const labelEle = domWindow.document.createElementNS(XUL_NS, "label");
+    const dC = this.recommendationConfig.presentation.defaultComponent;
+    labelEle.setAttribute("value", `${dC.rationale}`);
+    // create <browser> for <popupnotification>
+    const embeddedBrowser = domWindow.document.createElementNS(XUL_NS, "browser");
     embeddedBrowser.setAttribute("id", `${this.popupID}-browser`);
     embeddedBrowser.setAttribute("src", `resource://${STUDY_NAME}-content/panel.html`);
     embeddedBrowser.setAttribute("disableglobalhistory", "true");
     embeddedBrowser.setAttribute("type", "content");
     embeddedBrowser.setAttribute("flex", "1");
+    embeddedBrowser.setAttribute("tooltip", `${this.popupID}-tooltip`);
+    // attach elements to each other and the parent XUL document
+    tooltipEle.appendChild(labelEle);
+    popupnotificationcontentEle.appendChild(tooltipEle);
     popupnotificationcontentEle.appendChild(embeddedBrowser);
     popupContent.appendChild(popupnotificationcontentEle);
     popupSet.appendChild(popupContent);
