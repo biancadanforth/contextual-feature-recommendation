@@ -67,10 +67,7 @@ class Feature {
     const tooltipEle = domWindow.document.createElementNS(XUL_NS, "tooltip");
     tooltipEle.setAttribute("id", `${this.popupID}-tooltip`);
     tooltipEle.setAttribute("orient", "vertical");
-    // create <label> for <tooltip>
-    const labelEle = domWindow.document.createElementNS(XUL_NS, "label");
-    const dC = this.recommendationConfig.presentation.defaultComponent;
-    labelEle.setAttribute("value", `${dC.rationale}`);
+    tooltipEle.setAttribute("page", "true");
     // create <browser> for <popupnotification>
     const embeddedBrowser = domWindow.document.createElementNS(XUL_NS, "browser");
     embeddedBrowser.setAttribute("id", `${this.popupID}-browser`);
@@ -80,7 +77,6 @@ class Feature {
     embeddedBrowser.setAttribute("flex", "1");
     embeddedBrowser.setAttribute("tooltip", `${this.popupID}-tooltip`);
     // attach elements to each other and the parent XUL document
-    tooltipEle.appendChild(labelEle);
     popupnotificationcontentEle.appendChild(tooltipEle);
     popupnotificationcontentEle.appendChild(embeddedBrowser);
     popupContent.appendChild(popupnotificationcontentEle);

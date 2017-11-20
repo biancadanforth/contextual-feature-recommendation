@@ -68,6 +68,7 @@ class Panel extends React.Component {
             className="rationale"
             src={ rationaleUrl }
             alt="Rationale"
+            title={ dC.rationale }
           />
         </section>
         <section className="section-middle">
