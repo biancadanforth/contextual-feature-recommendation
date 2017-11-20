@@ -1,4 +1,3 @@
-/* :root vars from https://github.com/biancadanforth/contextual-feature-recommendation/blob/master/amazon-assistant/notification-bar/notificationBar.css */
 :root {
   --primary-color: #fcfcfc;
   --primary-text-color: #6f6f6f;
@@ -24,8 +23,6 @@ p {
 a {
   color: #5fbdf8;
 }
-
-/* ----- Middle section  ----- */
 
 .section-middle {
   padding-top: 10px;

@@ -1,4 +1,9 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
+/* global CleanupManager */
 
 const EXPORTED_SYMBOLS = ["Feature"];
 
@@ -6,15 +11,19 @@ const EXPORTED_SYMBOLS = ["Feature"];
 const { utils: Cu, interfaces: Ci } = Components;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Console.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
+// Study-specific modules
 const STUDY_NAME = "custom-popup-example-addon";
+XPCOMUtils.defineLazyModuleGetter(this, "CleanupManager",
+  `resource://${STUDY_NAME}-lib/CleanupManager.jsm`);
 
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
 class Feature {
-  constructor(popupID, recipe) {
-    this.popupID = popupID;
-    this.recipe = recipe;
+  constructor(config) {
+    this.popupID = config.POPUP_ID;
+    this.recommendationConfig = config.recommendationConfig;
     this.setPopupArguments();
   }
 
@@ -23,6 +32,8 @@ class Feature {
     const popupSet = doc.getElementById("mainPopupSet");
     if (!popupSet) {
       return new Promise(resolve => {
+        // don't need to remove this listener; window load only ever occurs once
+        // this event gets garbage collected when the window is unloaded
         doc.addEventListener("load", () => {
           resolve(doc.getElementById("mainPopupSet"));
         });
@@ -32,47 +43,71 @@ class Feature {
     return popupSet;
   }
 
+  // Insert custom XUL content into panel, including <browser> element
   async addPopupContent(domWindow) {
     const popupSet = await this.getPopupSet(domWindow);
-    const popupContent = domWindow.document.createElementNS(XUL_NS, "popupnotification");
+    const popupContent = domWindow.document
+      .createElementNS(XUL_NS, "popupnotification");
     popupContent.hidden = true;
     popupContent.id = `${this.popupID}-notification`;
-    // Insert custom XUL content into panel, including <browser> element
-    popupContent.innerHTML = `
-      <popupnotificationcontent
-        class="custom-popup-example-content"
-        orient="vertical"
-        style="margin:0"
-      >
-        <browser
-          id="custom-popup-example-browser"
-          src="resource://custom-popup-example-addon-content/panel.html"
-          disableglobalhistory="true"
-          type="content"
-          flex="1"
-        >
-        </browser>
-      </popupnotificationcontent>
-    `;
+    const popupnotificationcontentEle = domWindow.document
+      .createElementNS(XUL_NS, "popupnotificationcontent");
+    popupnotificationcontentEle.setAttribute("class", `${this.popupID}-content`);
+    popupnotificationcontentEle.setAttribute("orient", "vertical");
+    popupnotificationcontentEle.setAttribute("style", "margin:0");
+    const embeddedBrowser = domWindow.document
+      .createElementNS(XUL_NS, "browser");
+    embeddedBrowser.setAttribute("id", `${this.popupID}-browser`);
+    embeddedBrowser.setAttribute("src", `resource://${STUDY_NAME}-content/panel.html`);
+    embeddedBrowser.setAttribute("disableglobalhistory", "true");
+    embeddedBrowser.setAttribute("type", "content");
+    embeddedBrowser.setAttribute("flex", "1");
+    popupnotificationcontentEle.appendChild(embeddedBrowser);
+    popupContent.appendChild(popupnotificationcontentEle);
     popupSet.appendChild(popupContent);
     this.addBrowserContent(domWindow);
   }
 
   addBrowserContent(domWindow) {
-    this.embeddedBrowser = domWindow.document.getElementById("custom-popup-example-browser");
-    this.embeddedBrowser.addEventListener("load", () => {
-      // about:blank loads in a <browser> before the value of its src attribute
-      // so each embeddedBrowser actually loads twice
-      // make sure we are only accessing our src page, not about:blank, where contentWindow is a dead object
-      if (!this.embeddedBrowser.contentWindow) {
-        return;
-      }
-      // enable messaging from page script to JSM
-      // https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XPCOM/Language_Bindings/Components.utils.exportFunction
-      Cu.exportFunction(this.sendMessageToChrome.bind(this), this.embeddedBrowser.contentWindow, { defineAs: "sendMessageToChrome"});
-      // call a method in the page script from the JSM
-      this.embeddedBrowser.contentWindow.wrappedJSObject.addCustomContent(JSON.stringify(this.recipe));
-    }, { capture: true});
+    this.embeddedBrowser =
+      domWindow.document.getElementById("custom-popup-example-browser");
+    this.embeddedBrowser.addEventListener(
+      "load",
+      this.handleEmbeddedBrowserLoad.bind(this),
+      // capture is required: event target is the HTML document <browser> loads
+      { capture: true });
+    // <browser> already gets removed on shutdown with WindowWatcher.uninject,
+    // so no need to remove the "load" event listener
+    // however for mozilla eslint rule "balanced listeners", will remove.
+    CleanupManager.addCleanupHandler({
+      name: "removeEmbeddedBrowserLoadListener",
+      function: () => {
+        this.embeddedBrowser.removeEventListener(
+          "load",
+          this.handleEmbeddedBrowserLoad.bind(this),
+          { capture: true }
+        );
+      },
+    });
+  }
+
+  handleEmbeddedBrowserLoad(embeddedBrowser) {
+    // about:blank loads in a <browser> before the value of its src attribute,
+    // so each embeddedBrowser actually loads twice.
+    // Make sure we are only accessing our src page
+    // accessing about:blank's contentWindow returns a dead object
+    if (!this.embeddedBrowser.contentWindow) {
+      return;
+    }
+    // enable messaging from page script to JSM
+    Cu.exportFunction(
+      this.sendMessageToChrome.bind(this),
+      this.embeddedBrowser.contentWindow,
+      { defineAs: "sendMessageToChrome"}
+    );
+    // call a method in the page script from the JSM
+    this.embeddedBrowser.contentWindow.wrappedJSObject
+      .addCustomContent(JSON.stringify(this.recommendationConfig));
   }
 
   // This is a method my page scripts can call to pass messages to the JSM
@@ -80,14 +115,15 @@ class Feature {
     this.handleUIEvent(message, data);
   }
 
-  // <browser> height must be set explicitly, so base it off the content dimensions
+  // <browser> height must be set explicitly; base it off content dimensions
   resizeBrowser(dimensions) {
     this.embeddedBrowser.style.width = `${ dimensions.width }px`;
     this.embeddedBrowser.style.height = `${ dimensions.height }px`;
   }
 
   removePopupContent(domWindow) {
-    const popupContent = domWindow.document.querySelector("#mainPopupSet #custom-popup-example-notification");
+    const popupContent = domWindow.document
+      .querySelector("#mainPopupSet #custom-popup-example-notification");
     if (popupContent) {
       popupContent.remove();
     }
@@ -113,12 +149,15 @@ class Feature {
       case "FocusedCFR::panelState":
         console.log(`Panel ${data}`);
         break;
+      default:
+        throw new Error("UI event is not recognized.");
+        break;
     }
   }
 
   setPopupArguments() {
-    const dC = this.recipe.presentation.defaultComponent;
-    const pC = this.recipe.presentation.panelComponent;
+    const dC = this.recommendationConfig.presentation.defaultComponent;
+    const pC = this.recommendationConfig.presentation.panelComponent;
     this.anchor = null;
     this.message = dC.header;
     this.mainAction = {
