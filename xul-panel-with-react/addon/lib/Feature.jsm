@@ -26,23 +26,6 @@ const PANEL_CSS_URI = Services.io.newURI(
 const windowsWithInjectedCss = new WeakSet();
 let anyWindowsWithInjectedCss = false;
 
-// Add cleanup handler for CSS injected into windows by Feature
-CleanupManager.addCleanupHandler(() => {
-  if (anyWindowsWithInjectedCss) {
-    const windowEnumerator = Services.wm.getEnumerator("navigator:browser");
-    while (windowEnumerator.hasMoreElements()) {
-      const domWindow = windowEnumerator.getNext();
-      if (windowsWithInjectedCss.has(domWindow)) {
-        const utils = domWindow.QueryInterface(Ci.nsIInterfaceRequestor)
-          .getInterface(Ci.nsIDOMWindowUtils);
-        utils.removeSheet(PANEL_CSS_URI, domWindow.AGENT_SHEET);
-        windowsWithInjectedCss.delete(domWindow);
-      }
-    }
-  }
-});
-
-
 class Feature {
   constructor(config) {
     this.popupID = config.POPUP_ID;
@@ -114,6 +97,24 @@ class Feature {
       utils.loadSheet(PANEL_CSS_URI, domWindow.AGENT_SHEET);
       anyWindowsWithInjectedCss = true;
     }
+    // Add cleanup handler for CSS injected into windows by Feature
+    CleanupManager.addCleanupHandler({
+      name: "removeCustomXulStylesheets",
+      function: () => {
+        if (anyWindowsWithInjectedCss) {
+          const windowEnumerator = Services.wm.getEnumerator("navigator:browser");
+          while (windowEnumerator.hasMoreElements()) {
+            const window = windowEnumerator.getNext();
+            if (windowsWithInjectedCss.has(window)) {
+              const utils = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                .getInterface(Ci.nsIDOMWindowUtils);
+              utils.removeSheet(PANEL_CSS_URI, window.AGENT_SHEET);
+              windowsWithInjectedCss.delete(window);
+            }
+          }
+        }
+      },
+    });
   }
 
   addBrowserContent(domWindow) {
